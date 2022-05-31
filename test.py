@@ -3,6 +3,7 @@ from linearmodels.panel import compare
 import copy
 import io
 import pandas as pd
+import numpy as np
 
 te = dz.set_index(['artist', 'last_day']).copy()
 te['F' ] = te['Followers_fitted_v2_L1']
