@@ -2,6 +2,7 @@ from linearmodels import PanelOLS
 from linearmodels.panel import compare
 import copy
 import io
+import pandas as pd
 
 te = dz.set_index(['artist', 'last_day']).copy()
 te['F' ] = te['Followers_fitted_v2_L1']
