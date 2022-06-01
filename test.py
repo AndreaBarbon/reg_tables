@@ -2,8 +2,6 @@ from linearmodels import PanelOLS
 from linearmodels.panel import compare
 import copy
 import io
-import pandas as pd
-import numpy as np
 
 te = dz.set_index(['artist', 'last_day']).copy()
 te['F' ] = te['Followers_fitted_v2_L1']
@@ -70,7 +68,7 @@ class Model():
         
     def run(self):
         regs = [ spec.run() for spec in self.specs ]
-        return compare(regs)
+        return compare(regs, stars=True, precision='tstats')
         
 
 baseline = Spec( te, 'win_prc', ['F', 'F2'] )
