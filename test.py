@@ -3,13 +3,8 @@ from linearmodels.panel import compare
 import copy
 import io
 import pandas as pd
-
-te = dz.set_index(['artist', 'last_day']).copy()
-te['F' ] = te['Followers_fitted_v2_L1']
-te['F2'] = te['time2sale_L1']
-te['F3'] = te['time2sale']
-te = te[['F','F2', 'F3','win_prc']]
-te = te.dropna()
+import numpy as np
+import re
 
 
 class Spec():
@@ -17,6 +12,8 @@ class Spec():
     def __init__(self, data, y, x_vars, entity_effects=False):
         self.data = data
         self.y = y
+        if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
+            x_vars=[x_vars]
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         
@@ -69,28 +66,27 @@ class Model():
         
     def run(self):
         regs = [ spec.run() for spec in self.specs ]
-        return compare(regs, stars=True, precision='tstats')
-        
-
-baseline = Spec( te, 'win_prc', ['F', 'F2'] )
-rename   = {
-    'win_prc': '$P_t$',
-    'F' : '$F_1$',
-}
-
-model = Model(baseline, rename_dict=rename)
-model.add_spec(
-    y = 'F',
-    x_vars = ['F2', 'F3'],
-    entity_effects = True,
-)
-regs = model.run()
-csv = regs.summary.as_csv()
-tab = pd.read_csv(io.StringIO(csv), skiprows=1)
-tab = tab.set_index([tab.columns[0]])
-tab
-
-
-#spec2.x = ['F2', 'F3']
-
-#compare([spec1.run(), spec2.run()])
+        regs= compare(regs, stars=True, precision='tstats')
+        csv = regs.summary.as_csv()
+        tab = pd.read_csv(io.StringIO(csv), skiprows=1)
+        tab = tab.set_index([tab.columns[0]])
+        col_dict=dict(zip(tab.columns.to_list(), list(map(lambda x:'('+str(int(x.replace(' ','').replace('Model',''))+1)+')',tab.columns.to_list()))))
+        coeff_borders=[]
+        observ=int()
+        r2=int()
+        for idx,x in enumerate(tab.index):
+            if 'No. Observations' in x:observ=idx
+            if re.match('R-squared    ',x)!=None:
+                r2=idx
+            if '===' in x:coeff_borders.append(idx)
+        tab.rename(index={tab.index[observ]:'Observations'},columns=col_dict, inplace=True)
+        final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:coeff_borders[1]]])
+        for line in [observ,r2]:
+            final=pd.concat([final,tab[line:].head(1)])
+        effects=pd.DataFrame(index=['Time FEs', 'Entity FEs'])
+        for column in tab.columns:
+            for x in tab[column]:
+                if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'
+                if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'
+        effects.fillna('',inplace=True)
+        return pd.concat([final,effects])
