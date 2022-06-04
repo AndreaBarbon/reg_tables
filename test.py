@@ -6,23 +6,23 @@ import pandas as pd
 import numpy as np
 import re
 
-
 class Spec():
     
-    def __init__(self, data, y, x_vars, entity_effects=False):
+    def __init__(self, data, y, x_vars, entity_effects=False,time_effects=False):
         self.data = data
         self.y = y
         if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
             x_vars=[x_vars]
         self.x_vars = x_vars
         self.entity_effects = entity_effects
+        self.time_effects = time_effects
         
     def run(self):
         reg = PanelOLS(
                 self.data[[self.y]], 
                 self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
-                time_effects=True
+                time_effects=self.time_effects
             ).fit(
                 cov_type = 'clustered', cluster_entity=True, cluster_time=False
         )
@@ -51,15 +51,24 @@ class Model():
         self.baseline = baseline
         baseline.rename(self.rename_dict)
         self.specs = [self.baseline]
+        for comb in [(True,False),(False,True),(True,True)]:
+            new_spec = copy.deepcopy(self.baseline)
+            new_spec.entity_effects = comb[0]
+            new_spec.time_effects = comb[1]
+            self.specs.append(new_spec)
         
-    def add_spec(self,data=None, y=None, x_vars=None, entity_effects=None):
+    def add_spec(self,data=None, y=None, x_vars=None):
         new_spec = copy.deepcopy(self.baseline)
         if data is not None: new_spec.data = data
         if y is not None: new_spec.y = y
         if x_vars is not None: new_spec.x_vars = x_vars
-        if entity_effects is not None: new_spec.entity_effects = entity_effects
         new_spec.rename(self.rename_dict)
         self.specs.append(new_spec)
+        for comb in [(True,False),(False,True),(True,True)]:
+            variation = copy.deepcopy(new_spec)
+            variation.entity_effects = comb[0]
+            variation.time_effects = comb[1]
+            self.specs.append(variation)
         
     def rename(self, rename_dict):
         for spec in self.specs: spec.rename(rename_dict)
@@ -88,5 +97,4 @@ class Model():
             for x in tab[column]:
                 if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'
                 if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'
-        effects.fillna('',inplace=True)
-        return pd.concat([final,effects])
+        return pd.concat([final,effects]).fillna('')
