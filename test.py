@@ -4,7 +4,7 @@ import copy
 import io
 import pandas as pd
 import numpy as np
-import re
+import re 
 
 class Spec():
     
@@ -16,7 +16,10 @@ class Spec():
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
-        
+
+    def __repr__(self):
+        return (f'x-vars: {self.x_vars}, y-var: {self.y}')  
+
     def run(self):
         reg = PanelOLS(
                 self.data[[self.y]], 
@@ -56,7 +59,16 @@ class Model():
             new_spec.entity_effects = comb[0]
             new_spec.time_effects = comb[1]
             self.specs.append(new_spec)
-        
+    
+    def __repr__(self):
+        strr=''
+        for idx,basespec in enumerate(self.specs[0:len(self.specs):4]):
+            strr=strr+(f'Spec {idx}: x-vars: {basespec.x_vars}, y-var: {basespec.y}\n')
+        return strr
+    
+    def remove_spec (self,base_id):
+        del self.specs[base_id*4:(base_id+1)*4]
+
     def add_spec(self,data=None, y=None, x_vars=None):
         new_spec = copy.deepcopy(self.baseline)
         if data is not None: new_spec.data = data
@@ -73,7 +85,7 @@ class Model():
     def rename(self, rename_dict):
         for spec in self.specs: spec.rename(rename_dict)
         
-    def run(self):
+    def run(self,latex_path=None):
         regs = [ spec.run() for spec in self.specs ]
         regs= compare(regs, stars=True, precision='tstats')
         csv = regs.summary.as_csv()
@@ -97,4 +109,8 @@ class Model():
             for x in tab[column]:
                 if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'
                 if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'
-        return pd.concat([final,effects]).fillna('')
+        final=pd.concat([final,effects]).fillna('')
+        if latex_path!=None:
+            f=open(latex_path,'w')
+            f.write(final.style.to_latex())  
+        return final
