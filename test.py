@@ -97,7 +97,7 @@ class Model():
     def rename(self, rename_dict):
         for spec in self.specs: spec.rename(rename_dict)
         
-    def run(self,latex_path=None):
+    def run(self,coeff_decimals=None,latex_path=None):
         regs = [ spec.run() for spec in self.specs ]
         regs= compare(regs, stars=True, precision='tstats')
         csv = regs.summary.as_csv()
@@ -115,9 +115,17 @@ class Model():
         
         tab.rename(index={tab.index[observ]:'Observations'},columns=col_dict, inplace=True)
         tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
-        
-        try: final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:coeff_borders[1]]])
-        except: final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:-1]])
+        try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
+        except:coeffs=tab[coeff_borders[0]+1:-1]
+        if coeff_decimals!=None:
+            def change_decimals(cell,decimals=4):
+                if '*' in cell:
+                    return  re.sub('^-?[0-9].*?(?=\*)',str(round(float(re.search('^-?[0-9].*?(?=\*)' ,cell)[0]),decimals)),cell)
+                elif '(' in cell:
+                    return  re.sub('(?<=\()(.*)(?=\))',str(round(float(re.search('(?<=\()(.*)(?=\))' ,cell)[0]),decimals)),cell)
+                else:return ''
+            coeffs=coeffs.applymap(change_decimals,decimals=coeff_decimals)
+        final=pd.concat([tab.head(1),coeffs])
         
         for line in [observ,r2]:
             final=pd.concat([final,tab[line:].head(1)])
