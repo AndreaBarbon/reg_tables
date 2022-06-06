@@ -8,8 +8,8 @@ import re
 
 class Spec():
     
-    def __init__(
-            self, data, y, x_vars, 
+    def __init__(self, 
+            data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
             cluster_entity=False, cluster_time=False,
         ):
@@ -17,6 +17,7 @@ class Spec():
         self.y = y
         if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
             x_vars=[x_vars]
+            
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
@@ -78,26 +79,19 @@ class Model():
     def remove_spec (self,base_id):
         del self.specs[base_id*4:(base_id+1)*4]
 
-    def add_spec(
-        self,data=None, 
-        y=None, 
-        x_vars=None, 
-        entity_effects=False, time_effects=False, all_effects=False,
-        cluster_entity=False, cluster_time=False,
-    ):
-        new_spec = copy.deepcopy(self.baseline)
-        if data is not None: new_spec.data = data
-        if y is not None: new_spec.y = y
-        if x_vars is not None: new_spec.x_vars = x_vars
-        new_spec.rename(self.rename_dict)
-        new_spec.entity_effects=entity_effects
-        new_spec.time_effects=time_effects
-        new_spec.all_effects=all_effects
-        new_spec.cluster_entity=cluster_entity
-        new_spec.cluster_time=cluster_time
+    def add_spec( self, **kwargs):
         
+        new_spec = copy.deepcopy(self.baseline)
+        
+        for key in kwargs: 
+            setattr(new_spec, key, kwargs[key])
+            
+        print(new_spec.cluster_time)
+            
+        new_spec.rename(self.rename_dict)
         self.specs.append(new_spec)
-        if all_effects:
+        
+        if 'all_effects' in kwargs:
             for comb in [(True,False),(False,True),(True,True)]:
                 variation = copy.deepcopy(new_spec)
                 variation.entity_effects = comb[0]
@@ -142,3 +136,4 @@ class Model():
             f=open(latex_path,'w')
             f.write(final.style.to_latex())  
         return final
+
