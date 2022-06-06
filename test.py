@@ -8,7 +8,11 @@ import re
 
 class Spec():
     
-    def __init__(self, data, y, x_vars, entity_effects=False, time_effects=False, all_effects=False):
+    def __init__(
+            self, data, y, x_vars, 
+            entity_effects=False, time_effects=False, all_effects=False,
+            cluster_entity=False, cluster_time=False,
+        ):
         self.data = data
         self.y = y
         if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
@@ -17,6 +21,8 @@ class Spec():
         self.entity_effects = entity_effects
         self.time_effects = time_effects
         self.all_effects = all_effects
+        self.cluster_entity = cluster_entity
+        self.cluster_time = cluster_time
 
     def __repr__(self):
         return (f'x-vars: {self.x_vars}, y-var: {self.y}')  
@@ -26,9 +32,12 @@ class Spec():
                 self.data[[self.y]], 
                 self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
-                time_effects=self.time_effects
+                time_effects=self.time_effects,
+                
             ).fit(
-                cov_type = 'clustered', cluster_entity=True, cluster_time=False
+                cov_type = 'clustered', 
+            cluster_entity=self.cluster_entity, 
+            cluster_time=self.cluster_time
         )
         return reg
     
@@ -73,9 +82,8 @@ class Model():
         self,data=None, 
         y=None, 
         x_vars=None, 
-        entity_effects=False, 
-        time_effects=False,
-        all_effects=False
+        entity_effects=False, time_effects=False, all_effects=False,
+        cluster_entity=False, cluster_time=False,
     ):
         new_spec = copy.deepcopy(self.baseline)
         if data is not None: new_spec.data = data
@@ -85,6 +93,8 @@ class Model():
         new_spec.entity_effects=entity_effects
         new_spec.time_effects=time_effects
         new_spec.all_effects=all_effects
+        new_spec.cluster_entity=cluster_entity
+        new_spec.cluster_time=cluster_time
         
         self.specs.append(new_spec)
         if all_effects:
