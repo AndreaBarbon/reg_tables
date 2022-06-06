@@ -8,7 +8,7 @@ import re
 
 class Spec():
     
-    def __init__(self, data, y, x_vars, entity_effects=False,time_effects=False):
+    def __init__(self, data, y, x_vars, entity_effects=False, time_effects=False, all_effects=False):
         self.data = data
         self.y = y
         if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
@@ -16,6 +16,7 @@ class Spec():
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
+        self.all_effects = all_effects
 
     def __repr__(self):
         return (f'x-vars: {self.x_vars}, y-var: {self.y}')  
@@ -45,20 +46,19 @@ class Spec():
                 
         self.x_vars = new_x_vars
                 
-
-    
 class Model():
     
-    def __init__(self, baseline, rename_dict={}):
+    def __init__(self, baseline, rename_dict={}, all_effects=False):
         self.rename_dict = rename_dict
         self.baseline = baseline
         baseline.rename(self.rename_dict)
         self.specs = [self.baseline]
-        for comb in [(True,False),(False,True),(True,True)]:
-            new_spec = copy.deepcopy(self.baseline)
-            new_spec.entity_effects = comb[0]
-            new_spec.time_effects = comb[1]
-            self.specs.append(new_spec)
+        if all_effects:
+            for comb in [(True,False),(False,True),(True,True)]:
+                new_spec = copy.deepcopy(self.baseline)
+                new_spec.entity_effects = comb[0]
+                new_spec.time_effects = comb[1]
+                self.specs.append(new_spec)
     
     def __repr__(self):
         strr=''
@@ -69,18 +69,30 @@ class Model():
     def remove_spec (self,base_id):
         del self.specs[base_id*4:(base_id+1)*4]
 
-    def add_spec(self,data=None, y=None, x_vars=None):
+    def add_spec(
+        self,data=None, 
+        y=None, 
+        x_vars=None, 
+        entity_effects=False, 
+        time_effects=False,
+        all_effects=False
+    ):
         new_spec = copy.deepcopy(self.baseline)
         if data is not None: new_spec.data = data
         if y is not None: new_spec.y = y
         if x_vars is not None: new_spec.x_vars = x_vars
         new_spec.rename(self.rename_dict)
+        new_spec.entity_effects=entity_effects
+        new_spec.time_effects=time_effects
+        new_spec.all_effects=all_effects
+        
         self.specs.append(new_spec)
-        for comb in [(True,False),(False,True),(True,True)]:
-            variation = copy.deepcopy(new_spec)
-            variation.entity_effects = comb[0]
-            variation.time_effects = comb[1]
-            self.specs.append(variation)
+        if all_effects:
+            for comb in [(True,False),(False,True),(True,True)]:
+                variation = copy.deepcopy(new_spec)
+                variation.entity_effects = comb[0]
+                variation.time_effects = comb[1]
+                self.specs.append(variation)
         
     def rename(self, rename_dict):
         for spec in self.specs: spec.rename(rename_dict)
@@ -100,16 +112,22 @@ class Model():
             if re.match('R-squared    ',x)!=None:
                 r2=idx
             if '===' in x:coeff_borders.append(idx)
+        
         tab.rename(index={tab.index[observ]:'Observations'},columns=col_dict, inplace=True)
-        final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:coeff_borders[1]]])
+        tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
+        
+        try: final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:coeff_borders[1]]])
+        except: final=pd.concat([tab.head(1),tab[coeff_borders[0]+1:-1]])
+        
         for line in [observ,r2]:
             final=pd.concat([final,tab[line:].head(1)])
         effects=pd.DataFrame(index=['Time FEs', 'Entity FEs'])
+        some_effects = False
         for column in tab.columns:
             for x in tab[column]:
-                if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'
-                if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'
-        final=pd.concat([final,effects]).fillna('')
+                if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'; some_effects = True
+                if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'; some_effects = True
+        if some_effects: final=pd.concat([final,effects]).fillna('')
         if latex_path!=None:
             f=open(latex_path,'w')
             f.write(final.style.to_latex())  
