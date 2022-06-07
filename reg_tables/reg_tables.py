@@ -71,12 +71,13 @@ class Model():
     
     def __repr__(self):
         strr=''
-        for idx,basespec in enumerate(self.specs[0:len(self.specs):4]):
-            strr=strr+(f'Spec {idx}: x-vars: {basespec.x_vars}, y-var: {basespec.y}\n')
+        for idx,basespec in enumerate(self.specs):
+            strr=strr+(f'Spec {idx+1}: x-vars: {basespec.x_vars}, y-var: {basespec.y}\n')
         return strr
     
-    def remove_spec (self,base_id):
-        del self.specs[base_id*4:(base_id+1)*4]
+    def remove_spec (self,idx1,idx2=None):
+        if idx2!=None:del self.specs[idx1-1:idx2-1] 
+        else:del self.specs[idx1-1] 
 
     def add_spec( self, **kwargs):
         
