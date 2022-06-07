@@ -24,7 +24,6 @@ setuptools.setup(
     ],                                      # Information to filter the project on PyPi website
     python_requires='>=3.8',                # Minimum version requirement of the package
     py_modules=["reg_tables"],             # Name of the python package
-    package_dir={'':'quicksample/src'},     # Directory of the source code of the package
     install_requires=['numpy',
     'pandas',
     'linearmodels']
