@@ -83,10 +83,7 @@ class Model():
         
         new_spec = copy.deepcopy(self.baseline)
         
-        for key in kwargs: 
-            setattr(new_spec, key, kwargs[key])
-            
-        print(new_spec.cluster_time)
+        for key in kwargs: setattr(new_spec, key, kwargs[key])
             
         new_spec.rename(self.rename_dict)
         self.specs.append(new_spec)
@@ -144,4 +141,3 @@ class Model():
             f=open(latex_path,'w')
             f.write(final.style.to_latex())  
         return final
-
