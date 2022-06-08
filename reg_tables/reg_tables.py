@@ -10,7 +10,7 @@ class Spec():
     def __init__(self, 
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
-            cluster_entity=False, cluster_time=False,
+            cluster_entity=False, cluster_time=False, double_cluster=False
         ):
         self.data = data
         self.y = y
@@ -23,21 +23,23 @@ class Spec():
         self.all_effects = all_effects
         self.cluster_entity = cluster_entity
         self.cluster_time = cluster_time
+        self.double_cluster = double_cluster
 
     def __repr__(self):
         return (f'x-vars: {self.x_vars}, y-var: {self.y}')  
 
     def run(self):
+            
         reg = PanelOLS(
                 self.data[[self.y]], 
                 self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
-                time_effects=self.time_effects,
+                time_effects  =self.time_effects,
                 
             ).fit(
-                cov_type = 'clustered', 
-            cluster_entity=self.cluster_entity, 
-            cluster_time=self.cluster_time
+                cov_type   = 'clustered', 
+            cluster_entity = (self.cluster_entity | self.double_cluster),
+            cluster_time   = (self.cluster_time   | self.double_cluster)
         )
         return reg
     
