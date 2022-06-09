@@ -2,7 +2,7 @@
 
 ## Installation
 ```
-pip install reg-tables
+pip install reg_tables
 ```
 
 
