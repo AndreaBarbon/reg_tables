@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="reg_tables",                     # This is the name of the package
     version="0.0.1",                        # The initial release version
-    author="Andrea Barbon",                     # Full name of the author
+    author="Andrea Barbon, Kirill Kazakov",                     # Full name of the author
     author_email='',
     url = 'https://github.com/AndreaBarbon/reg_tables',
     description="",

@@ -1,5 +1,10 @@
 ## Description
 
+## Installation
+```
+pip install reg-tables
+```
+
 
 ## Usage
 
