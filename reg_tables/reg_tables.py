@@ -63,13 +63,14 @@ class Model():
         self.rename_dict = rename_dict
         self.baseline = baseline
         baseline.rename(self.rename_dict)
-        self.specs = [self.baseline]
+        self.specs = []
         if all_effects:
-            for comb in [(True,False),(False,True),(True,True)]:
+            for comb in [(False,False),(True,False),(False,True),(True,True)]:
                 new_spec = copy.deepcopy(self.baseline)
                 new_spec.entity_effects = comb[0]
                 new_spec.time_effects = comb[1]
                 self.specs.append(new_spec)
+        else:self.specs.append(new_spec)
     
     def __repr__(self):
         strr=''
@@ -88,14 +89,14 @@ class Model():
         for key in kwargs: setattr(new_spec, key, kwargs[key])
             
         new_spec.rename(self.rename_dict)
-        self.specs.append(new_spec)
         
         if 'all_effects' in kwargs:
-            for comb in [(True,False),(False,True),(True,True)]:
+            for comb in [(False,False),(True,False),(False,True),(True,True)]:
                 variation = copy.deepcopy(new_spec)
                 variation.entity_effects = comb[0]
                 variation.time_effects = comb[1]
                 self.specs.append(variation)
+        else:self.specs.append(new_spec)
         
     def rename(self, rename_dict):
         for spec in self.specs: spec.rename(rename_dict)
