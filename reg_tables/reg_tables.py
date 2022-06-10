@@ -70,7 +70,9 @@ class Model():
                 new_spec.entity_effects = comb[0]
                 new_spec.time_effects = comb[1]
                 self.specs.append(new_spec)
-        else:self.specs.append(new_spec)
+        else:
+            new_spec = copy.deepcopy(self.baseline)
+            self.specs.append(new_spec)
     
     def __repr__(self):
         strr=''
