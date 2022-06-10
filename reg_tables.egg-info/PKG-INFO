@@ -1,3 +1,21 @@
+Metadata-Version: 2.1
+Name: reg-tables
+Version: 0.0.2
+Home-page: https://github.com/AndreaBarbon/reg_tables
+Author: Andrea Barbon, Kirill Kazakov
+Author-email: 
+License: MIT
+Keywords: Linear models,regression table
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 ## Description
 
 A simple [linearmodels](https://pypi.org/project/linearmodels/) extension to run panel regressions with different specifications and export the results in a professional-looking latex table
