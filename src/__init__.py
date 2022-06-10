@@ -1,1 +1,0 @@
-from reg_tables import Spec,Model
