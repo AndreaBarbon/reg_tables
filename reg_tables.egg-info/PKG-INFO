@@ -1,19 +1,20 @@
 Metadata-Version: 2.1
 Name: reg-tables
-Version: 0.0.4
-Summary: A simple [linearmodels](https://pypi.org/project/linearmodels/) extension to run panel regressions with different specifications and export the results in a professional-looking latex table
-Home-page: https://github.com/AndreaBarbon/reg_tables
+Version: 0.1.0
+Summary: A simple linearmodelsextension to run panel regressions with different specifications and export the results in a professional-looking latex table
+Home-page: https://www.abarbon.com
+Download-URL: https://github.com/AndreaBarbon/reg_tables/archive/refs/tags/0.0.5.tar.gz
 Author: Andrea Barbon, Kirill Kazakov
 Author-email: andrea.3arbon@gmail.com
 License: MIT
-Keywords: econometrics,Linear models,regression table,panel regression,fixed effects,clustered standard errors
+Keywords: Linear models,regression table
 Classifier: Development Status :: 3 - Alpha
 Classifier: Intended Audience :: Education
 Classifier: Intended Audience :: Science/Research
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Operating System :: OS Independent
-Requires-Python: >=3.0
+Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
 

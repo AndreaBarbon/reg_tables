@@ -3,6 +3,8 @@ README.md
 pyproject.toml
 setup.cfg
 setup.py
+reg_tables/__init__.py
+reg_tables/main.py
 reg_tables.egg-info/PKG-INFO
 reg_tables.egg-info/SOURCES.txt
 reg_tables.egg-info/dependency_links.txt
