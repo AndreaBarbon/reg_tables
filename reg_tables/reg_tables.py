@@ -6,7 +6,10 @@ import pandas as pd
 import numpy as np
 import re 
 class Spec():
-    
+    """
+    Contains specification of regression
+    """
+
     def __init__(self, 
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
@@ -58,7 +61,9 @@ class Spec():
         self.x_vars = new_x_vars
                 
 class Model():
-    
+    """
+    Contains multiple Spec objects
+    """
     def __init__(self, baseline, rename_dict={}, all_effects=False):
         self.rename_dict = rename_dict
         self.baseline = baseline
