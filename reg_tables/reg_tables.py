@@ -75,7 +75,9 @@ class Model():
                 new_spec.entity_effects = comb[0]
                 new_spec.time_effects = comb[1]
                 self.specs.append(new_spec)
-        else:self.specs.append(new_spec)
+        else:
+            new_spec = copy.deepcopy(self.baseline)
+            self.specs.append(new_spec)
     
     def __repr__(self):
         strr=''
@@ -127,13 +129,13 @@ class Model():
         try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
         except:coeffs=tab[coeff_borders[0]+1:-1]
         if coeff_decimals!=None:
-            def change_decimals(cell,decimals=4):
+            def change_decimals(cell):
                 if '*' in cell:
-                    return  re.sub('^-?[0-9].*?(?=\*)',str(round(float(re.search('^-?[0-9].*?(?=\*)' ,cell)[0]),decimals)),cell)
+                    return  re.sub('^-?[0-9].*?(?=\*)',str(round(float(re.search('^-?[0-9].*?(?=\*)' ,cell)[0]),coeff_decimals)),cell)
                 elif '(' in cell:
-                    return  re.sub('(?<=\()(.*)(?=\))',str(round(float(re.search('(?<=\()(.*)(?=\))' ,cell)[0]),decimals)),cell)
+                    return  re.sub('(?<=\()(.*)(?=\))',str(round(float(re.search('(?<=\()(.*)(?=\))' ,cell)[0]),coeff_decimals)),cell)
                 else:return ''
-            coeffs=coeffs.applymap(change_decimals,decimals=coeff_decimals)
+            coeffs=coeffs.applymap(change_decimals)
         final=pd.concat([tab.head(1),coeffs])
         
         for line in [observ,r2]:
@@ -147,5 +149,5 @@ class Model():
         if some_effects: final=pd.concat([final,effects]).fillna('')
         if latex_path!=None:
             f=open(latex_path,'w')
-            f.write(final.style.to_latex())  
+            f.write(final.to_latex())  
         return final
