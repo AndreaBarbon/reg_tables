@@ -9,6 +9,7 @@ setuptools.setup(
     author="Andrea Barbon, Kirill Kazakov",                     
     author_email='',
     url = 'https://github.com/AndreaBarbon/reg_tables',
+    download_url='https://github.com/AndreaBarbon/reg_tables/archive/refs/tags/0.0.2.tar.gz',
     description="",
     license='MIT',
     long_description=long_description,      
