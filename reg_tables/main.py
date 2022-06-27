@@ -1,5 +1,6 @@
 from linearmodels import PanelOLS
 from linearmodels.panel import compare
+from statsmodels.tools.tools import add_constant
 import copy
 import io
 import pandas as pd
@@ -13,13 +14,13 @@ class Spec():
     def __init__(self, 
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
-            cluster_entity=False, cluster_time=False, double_cluster=False
+            cluster_entity=False, cluster_time=False, double_cluster=False,intercept=False
         ):
         self.data = data
         self.y = y
         if isinstance(x_vars,(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
             x_vars=[x_vars]
-            
+        
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
@@ -27,15 +28,16 @@ class Spec():
         self.cluster_entity = cluster_entity
         self.cluster_time = cluster_time
         self.double_cluster = double_cluster
+        self.intercept=intercept
 
     def __repr__(self):
-        return (f'x-vars: {self.x_vars}, y-var: {self.y}')  
+        return (f'x-vars: {self.x_vars}, y-var: {self.y}, Entity Effects: {self.entity_effects} , Time Effects: {self.time_effects}, All Effects: {self.all_effects}, Cluster Entity: {self.cluster_entity}, Cluster Time: {self.cluster_time}, Double Cluster: {self.double_cluster}, Intercept: {self.intercept}')  
 
     def run(self):
             
         reg = PanelOLS(
-                self.data[[self.y]], 
-                self.data[self.x_vars], 
+                self.data[[self.y]],
+                add_constant(self.data[self.x_vars])if self.intercept==True else self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
                 time_effects  =self.time_effects,
                 
@@ -66,6 +68,7 @@ class Model():
     """
     def __init__(self, baseline, rename_dict={}, all_effects=False):
         self.rename_dict = rename_dict
+        baseline.intercept=True
         self.baseline = baseline
         baseline.rename(self.rename_dict)
         self.specs = []
@@ -92,7 +95,7 @@ class Model():
     def add_spec( self, **kwargs):
         
         new_spec = copy.deepcopy(self.baseline)
-        
+        new_spec.intercept=False
         for key in kwargs: setattr(new_spec, key, kwargs[key])
             
         new_spec.rename(self.rename_dict)
