@@ -87,8 +87,8 @@ class Model():
     
     def __repr__(self):
         strr=''
-        for idx,basespec in enumerate(self.specs):
-            strr=strr+(f'Spec {idx+1}: x-vars: {basespec.x_vars}, y-var: {basespec.y}\n')
+        for idx,spec in enumerate(self.specs):
+            strr=strr+(f'Spec {idx+1}: '+ spec.__repr__()+'\n')
         return strr
     
     def remove_spec (self,idx1,idx2=None):
@@ -118,6 +118,7 @@ class Model():
     def run(self,coeff_decimals=None,latex_path=None):
         regs = [ spec.run() for spec in self.specs ]
         regs= compare(regs, stars=True, precision='tstats')
+        #return regs
         csv = regs.summary.as_csv()
         tab = pd.read_csv(io.StringIO(csv), skiprows=1)
         tab = tab.set_index([tab.columns[0]])
@@ -125,13 +126,15 @@ class Model():
         coeff_borders=[]
         observ=int()
         r2=int()
+        const=int()
         for idx,x in enumerate(tab.index):
             if 'No. Observations' in x:observ=idx
+            if 'const' in x:const=idx
             if re.match('R-squared    ',x)!=None:
                 r2=idx
             if '===' in x:coeff_borders.append(idx)
         
-        tab.rename(index={tab.index[observ]:'Observations'},columns=col_dict, inplace=True)
+        tab.rename(index={tab.index[observ]:'Observations',tab.index[const]:'Intercept'},columns=col_dict, inplace=True)
         tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
         try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
         except:coeffs=tab[coeff_borders[0]+1:-1]
@@ -143,6 +146,7 @@ class Model():
                     return  re.sub('(?<=\()(.*)(?=\))',str(round(float(re.search('(?<=\()(.*)(?=\))' ,cell)[0]),coeff_decimals)),cell)
                 else:return ''
             coeffs=coeffs.applymap(change_decimals)
+        if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
         final=pd.concat([tab.head(1),coeffs])
         
         for line in [observ,r2]:
