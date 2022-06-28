@@ -30,6 +30,7 @@ class Spec():
         self.cluster_time = cluster_time
         self.double_cluster = double_cluster
         self.intercept=intercept
+        if (time_effects or entity_effects): intercept=False
 
     def __repr__(self):
         return (f'x-vars: {self.x_vars}, y-var: {self.y}, Entity Effects: {self.entity_effects} , Time Effects: {self.time_effects}, All Effects: {self.all_effects}, Cluster Entity: {self.cluster_entity}, Cluster Time: {self.cluster_time}, Double Cluster: {self.double_cluster}, Intercept: {self.intercept}')  
@@ -100,6 +101,8 @@ class Model():
         new_spec = copy.deepcopy(self.baseline)
         #new_spec.intercept=False
         for key in kwargs: setattr(new_spec, key, kwargs[key])
+
+        if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept=False
             
         new_spec.rename(self.rename_dict)
         
@@ -108,7 +111,10 @@ class Model():
                 variation = copy.deepcopy(new_spec)
                 variation.entity_effects = comb[0]
                 variation.time_effects = comb[1]
+                variation.intercept=False
                 self.specs.append(variation)
+
+
         else:self.specs.append(new_spec)
         
     def rename(self, rename_dict):
