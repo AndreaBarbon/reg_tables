@@ -50,6 +50,7 @@ class Spec():
         return reg
     
     def rename(self, rename_dict):
+        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
         self.data.rename(rename_dict, inplace=True, axis=1)
         if self.y in rename_dict.keys():
             self.y = rename_dict[self.y]
@@ -68,6 +69,7 @@ class Model():
     Contains multiple Spec objects
     """
     def __init__(self, baseline, rename_dict={}, all_effects=False):
+        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
         self.rename_dict = rename_dict
         baseline.intercept=True
         self.baseline = baseline
@@ -110,6 +112,7 @@ class Model():
         else:self.specs.append(new_spec)
         
     def rename(self, rename_dict):
+        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
         for spec in self.specs: spec.rename(rename_dict)
         
     def run(self,coeff_decimals=None,latex_path=None):
