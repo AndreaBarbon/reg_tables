@@ -14,7 +14,8 @@ class Spec():
     def __init__(self, 
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
-            cluster_entity=False, cluster_time=False, double_cluster=False,intercept=False
+            cluster_entity=False, cluster_time=False, double_cluster=False,
+            intercept=True
         ):
         self.data = data
         self.y = y
@@ -95,7 +96,7 @@ class Model():
     def add_spec( self, **kwargs):
         
         new_spec = copy.deepcopy(self.baseline)
-        new_spec.intercept=False
+        #new_spec.intercept=False
         for key in kwargs: setattr(new_spec, key, kwargs[key])
             
         new_spec.rename(self.rename_dict)
