@@ -155,6 +155,11 @@ class Model():
         if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
         final=pd.concat([tab.head(1),coeffs])
         
+        # Add spacing
+        final=pd.concat([final.iloc[:1],pd.DataFrame(index=[' ']), final.iloc[1:]])
+        final=pd.concat([final,pd.DataFrame(index=[' '])])
+
+        
         for line in [observ,r2]:
             final=pd.concat([final,tab[line:].head(1)])
         effects=pd.DataFrame(index=['Time FEs', 'Entity FEs'])
