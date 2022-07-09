@@ -130,7 +130,7 @@ class Model():
         if coeff_decimals!=None:
             def change_decimals(cell):
                 try:
-                    return re.sub('^-?[0-9]\.[0-9]*',str(round(float(re.search('^-?[0-9]\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
+                    return re.sub('^-?[0-9]*\.[0-9]*',str(round(float(re.search('^-?[0-9]*\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
                 except:
                     return cell
             coeffs=coeffs.applymap(change_decimals)
