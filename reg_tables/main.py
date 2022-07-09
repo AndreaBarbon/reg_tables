@@ -50,31 +50,15 @@ class Spec():
         )
         return reg
     
-    def rename(self, rename_dict):
-        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
-        self.data.rename(rename_dict, inplace=True, axis=1)
-        if self.y in rename_dict.keys():
-            self.y = rename_dict[self.y]
-        
-        new_x_vars = []
-        for x in self.x_vars:
-            if x in rename_dict.keys():
-                new_x_vars.append(rename_dict[x])
-            else:
-                new_x_vars.append(x)
-                
-        self.x_vars = new_x_vars
                 
 class Model():
     """
     Contains multiple Spec objects
     """
     def __init__(self, baseline, rename_dict={}, all_effects=False):
-        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
-        self.rename_dict = rename_dict
+        self._rename_dict = rename_dict#add check
         baseline.intercept=True
         self.baseline = baseline
-        baseline.rename(self.rename_dict)
         self.specs = []
         if all_effects:
             for comb in [(False,False),(True,False),(False,True),(True,True)]:
@@ -99,12 +83,10 @@ class Model():
     def add_spec( self, **kwargs):
         
         new_spec = copy.deepcopy(self.baseline)
-        #new_spec.intercept=False
         for key in kwargs: setattr(new_spec, key, kwargs[key])
 
         if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept=False
             
-        new_spec.rename(self.rename_dict)
         
         if 'all_effects' in kwargs:
             for comb in [(False,False),(True,False),(False,True),(True,True)]:
@@ -118,13 +100,14 @@ class Model():
         else:self.specs.append(new_spec)
         
     def rename(self, rename_dict):
-        if 'const' not in rename_dict: rename_dict['const'] = 'Intercept'
-        for spec in self.specs: spec.rename(rename_dict)
+        for key in rename_dict.keys(): self._rename_dict[key]=rename_dict[key]
         
-    def run(self,coeff_decimals=None,latex_path=None):
+    def run(self,coeff_decimals=None,latex_path=None,time_fe_name='Time FEs', entity_fe_name='Entity FEs', custom_row=None):
+        if custom_row !=None:
+            if isinstance (custom_row,list)!=True:
+                print('Custom row is not a list')
         regs = [ spec.run() for spec in self.specs ]
         regs= compare(regs, stars=True, precision='tstats')
-        #return regs
         csv = regs.summary.as_csv()
         tab = pd.read_csv(io.StringIO(csv), skiprows=1)
         tab = tab.set_index([tab.columns[0]])
@@ -146,15 +129,22 @@ class Model():
         except:coeffs=tab[coeff_borders[0]+1:-1]
         if coeff_decimals!=None:
             def change_decimals(cell):
-                if '*' in cell:
-                    return  re.sub('^-?[0-9].*?(?=\*)',str(round(float(re.search('^-?[0-9].*?(?=\*)' ,cell)[0]),coeff_decimals)),cell)
-                elif '(' in cell:
-                    return  re.sub('(?<=\()(.*)(?=\))',str(round(float(re.search('(?<=\()(.*)(?=\))' ,cell)[0]),coeff_decimals)),cell)
-                else:return ''
+                try:
+                    return re.sub('^-?[0-9]\.[0-9]*',str(round(float(re.search('^-?[0-9]\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
+                except:
+                    return cell
             coeffs=coeffs.applymap(change_decimals)
         if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
+        coeffs_dict={}
+        for idx,name in enumerate(coeffs.index):
+            if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
+                coeffs_dict[name]= self._rename_dict[re.sub('[ \t]+$','',name)]
+        coeffs.rename(index=coeffs_dict,inplace=True)
         final=pd.concat([tab.head(1),coeffs])
-        
+        for idx,name in enumerate(final.iloc[0]):
+            if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
+               final.iloc[0][idx]= self._rename_dict[re.sub('[ \t]+$','',name)]
+
         # Add spacing
         final=pd.concat([final.iloc[:1],pd.DataFrame(index=[' ']), final.iloc[1:]])
         final=pd.concat([final,pd.DataFrame(index=[' '])])
@@ -162,14 +152,22 @@ class Model():
         
         for line in [observ,r2]:
             final=pd.concat([final,tab[line:].head(1)])
-        effects=pd.DataFrame(index=['Time FEs', 'Entity FEs'])
+        
+        effects=pd.DataFrame(index=[time_fe_name, entity_fe_name])
         some_effects = False
         for column in tab.columns:
             for x in tab[column]:
-                if re.search('Time', str(x))!=None: effects.loc['Time FEs',column]='Yes'; some_effects = True
-                if re.search('Entity', str(x))!=None: effects.loc['Entity FEs',column]='Yes'; some_effects = True
-        if some_effects: final=pd.concat([final,effects]).fillna('')
+                if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
+                if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
+        if some_effects: final=pd.concat([final,effects])
+        if custom_row!=None:
+            custom=pd.DataFrame(index=[custom_row[0]])
+            for idx,item in enumerate(custom_row[1:]):
+                custom.at[custom_row[0],final.columns[idx]]=item
+            final=pd.concat([final,custom])
+        final.fillna('',inplace=True)
         if latex_path!=None:
             f=open(latex_path,'w')
-            f.write(final.to_latex())  
+            f.write(re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})','c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',\
+                final.to_latex())[0]),final.to_latex()))  
         return final
