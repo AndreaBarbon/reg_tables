@@ -15,7 +15,7 @@ class Spec():
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
             cluster_entity=False, cluster_time=False, double_cluster=False,
-            intercept=True
+            intercept=True,check_rank=True
         ):
         self.data = data
         self.y = y
@@ -30,10 +30,11 @@ class Spec():
         self.cluster_time = cluster_time
         self.double_cluster = double_cluster
         self.intercept=intercept
+        self.check_rank=check_rank
         if (time_effects or entity_effects): intercept=False
 
     def __repr__(self):
-        return (f'x-vars: {self.x_vars}, y-var: {self.y}, Entity Effects: {self.entity_effects} , Time Effects: {self.time_effects}, All Effects: {self.all_effects}, Cluster Entity: {self.cluster_entity}, Cluster Time: {self.cluster_time}, Double Cluster: {self.double_cluster}, Intercept: {self.intercept}')  
+        return (f'x-vars: {self.x_vars}, y: {self.y}, Entity Effects: {self.entity_effects} , Time Effects: {self.time_effects}, All Effects: {self.all_effects}, Cluster Entity: {self.cluster_entity}, Cluster Time: {self.cluster_time}, Double Cluster: {self.double_cluster}, Intercept: {self.intercept},Check rank: {self.check_rank}')  
 
     def run(self):
             
@@ -42,6 +43,7 @@ class Spec():
                 add_constant(self.data[self.x_vars])if self.intercept==True else self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
                 time_effects  =self.time_effects,
+                check_rank=self.check_rank
                 
             ).fit(
                 cov_type   = 'clustered', 
@@ -83,10 +85,14 @@ class Model():
     def add_spec( self, **kwargs):
         
         new_spec = copy.deepcopy(self.baseline)
+        try:
+            if isinstance(kwargs[x_vars],(list,dict,set,tuple,np.ndarray,pd.core.series.Series))!=True:
+                kwargs[x_vars]=[x_vars] 
+        except:pass
         for key in kwargs: setattr(new_spec, key, kwargs[key])
 
         if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept=False
-            
+
         
         if 'all_effects' in kwargs:
             for comb in [(False,False),(True,False),(False,True),(True,True)]:
