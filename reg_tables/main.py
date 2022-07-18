@@ -113,6 +113,7 @@ class Model():
             if isinstance (custom_row,list)!=True:
                 print('Custom row is not a list')
         regs = [ spec.run() for spec in self.specs ]
+        R2s  = [ reg.rsquared_inclusive for reg in regs ]
         regs= compare(regs, stars=True, precision='tstats')
         csv = regs.summary.as_csv()
         tab = pd.read_csv(io.StringIO(csv), skiprows=1)
@@ -158,7 +159,10 @@ class Model():
         
         for line in [observ,r2]:
             final=pd.concat([final,tab[line:].head(1)])
-        
+
+        # Inclusive R2s (including fixed effects)
+        final.loc[r2] = R2s
+
         effects=pd.DataFrame(index=[time_fe_name, entity_fe_name])
         some_effects = False
         for column in tab.columns:
