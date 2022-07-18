@@ -141,7 +141,10 @@ class Model():
                 except:
                     return cell
             coeffs=coeffs.applymap(change_decimals)
-            R2s  = [ "{0:0.3f}".format(x) for x in R2s ]
+            s = "\{0:0.{0}f\}".format(coeff_decimals)
+            R2s  = [ s.format(x) for x in R2s ]
+        else:
+            R2s  = [ "{0:0.4f}".format(x) for x in R2s ]
 
         if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
         coeffs_dict={}
