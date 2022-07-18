@@ -43,7 +43,7 @@ class Spec():
                 add_constant(self.data[self.x_vars])if self.intercept==True else self.data[self.x_vars], 
                 entity_effects=self.entity_effects, 
                 time_effects  =self.time_effects,
-                check_rank=self.check_rank
+                #check_rank=self.check_rank
                 
             ).fit(
                 cov_type   = 'clustered', 
