@@ -187,5 +187,5 @@ class Model():
             if latex_path!=None:
                 f=open(latex_path,'w')
                 f.write(re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})','c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',\
-                    final.to_latex())[0]),final.style.to_latex()))  
+                    final.style.to_latex())[0]),final.style.to_latex()))  
             return final
