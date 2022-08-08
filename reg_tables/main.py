@@ -135,8 +135,8 @@ class Model():
             
             tab.rename(index={tab.index[observ]:'Observations',tab.index[const]:'Intercept'},columns=col_dict, inplace=True)
             tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
-            try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
-            except:coeffs=tab[coeff_borders[0]+1:-1]
+            try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]].copy()
+            except:coeffs=tab[coeff_borders[0]+1:-1].copy()
             if coeff_decimals!=None:
                 def change_decimals(cell):
                     try:
