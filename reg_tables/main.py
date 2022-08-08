@@ -1,3 +1,4 @@
+import warnings
 from linearmodels import PanelOLS
 from linearmodels.panel import compare
 from statsmodels.tools.tools import add_constant
@@ -109,80 +110,82 @@ class Model():
         for key in rename_dict.keys(): self._rename_dict[key]=rename_dict[key]
         
     def run(self,coeff_decimals=None,latex_path=None,time_fe_name='Time FEs', entity_fe_name='Entity FEs', custom_row=None):
-        if custom_row !=None:
-            if isinstance (custom_row,list)!=True:
-                print('Custom row is not a list')
-        regs = [ spec.run() for spec in self.specs ]
-        R2s  = [ reg.rsquared_inclusive for reg in regs ]
-        regs= compare(regs, stars=True, precision='tstats')
-        csv = regs.summary.as_csv()
-        tab = pd.read_csv(io.StringIO(csv), skiprows=1)
-        tab = tab.set_index([tab.columns[0]])
-        col_dict=dict(zip(tab.columns.to_list(), list(map(lambda x:'('+str(int(x.replace(' ','').replace('Model',''))+1)+')',tab.columns.to_list()))))
-        coeff_borders=[]
-        observ=int()
-        r2=int()
-        const=int()
-        for idx,x in enumerate(tab.index):
-            if 'No. Observations' in x:observ=idx
-            if 'const' in x:const=idx
-            if re.match('R-squared    ',x)!=None:
-                r2=idx
-            if '===' in x:coeff_borders.append(idx)
-        
-        tab.rename(index={tab.index[observ]:'Observations',tab.index[const]:'Intercept'},columns=col_dict, inplace=True)
-        tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
-        try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
-        except:coeffs=tab[coeff_borders[0]+1:-1]
-        if coeff_decimals!=None:
-            def change_decimals(cell):
-                try:
-                    return re.sub('^-?[0-9]*\.[0-9]*',str(round(float(re.search('^-?[0-9]*\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
-                except:
-                    return cell
-            coeffs=coeffs.applymap(change_decimals)
-            s = "\{0:0.{0}f\}".format(coeff_decimals)
-            R2s  = [ s.format(x) for x in R2s ]
-        else:
-            R2s  = [ "{0:0.4f}".format(x) for x in R2s ]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="In a future version of pandas all arguments of concat except for the argument 'objs' will be keyword-only.")
+            if custom_row !=None:
+                if isinstance (custom_row,list)!=True:
+                    print('Custom row is not a list')
+            regs = [ spec.run() for spec in self.specs ]
+            R2s  = [ reg.rsquared_inclusive for reg in regs ]
+            regs= compare(regs, stars=True, precision='tstats')
+            csv = regs.summary.as_csv()
+            tab = pd.read_csv(io.StringIO(csv), skiprows=1)
+            tab = tab.set_index([tab.columns[0]])
+            col_dict=dict(zip(tab.columns.to_list(), list(map(lambda x:'('+str(int(x.replace(' ','').replace('Model',''))+1)+')',tab.columns.to_list()))))
+            coeff_borders=[]
+            observ=int()
+            r2=int()
+            const=int()
+            for idx,x in enumerate(tab.index):
+                if 'No. Observations' in x:observ=idx
+                if 'const' in x:const=idx
+                if re.match('R-squared    ',x)!=None:
+                    r2=idx
+                if '===' in x:coeff_borders.append(idx)
+            
+            tab.rename(index={tab.index[observ]:'Observations',tab.index[const]:'Intercept'},columns=col_dict, inplace=True)
+            tab.loc['Observations'] = ["{0:0,.0f}".format(float(x)) for x in tab.loc['Observations']]
+            try:coeffs=tab[coeff_borders[0]+1:coeff_borders[1]]
+            except:coeffs=tab[coeff_borders[0]+1:-1]
+            if coeff_decimals!=None:
+                def change_decimals(cell):
+                    try:
+                        return re.sub('^-?[0-9]*\.[0-9]*',str(round(float(re.search('^-?[0-9]*\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
+                    except:
+                        return cell
+                coeffs=coeffs.applymap(change_decimals)
+                s = "\{0:0.{0}f\}".format(coeff_decimals)
+                R2s  = [ s.format(x) for x in R2s ]
+            else:
+                R2s  = [ "{0:0.4f}".format(x) for x in R2s ]
 
-        if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
-        coeffs_dict={}
-        for idx,name in enumerate(coeffs.index):
-            if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
-                coeffs_dict[name]= self._rename_dict[re.sub('[ \t]+$','',name)]
-        coeffs.rename(index=coeffs_dict,inplace=True)
-        final=pd.concat([tab.head(1),coeffs])
-        for idx,name in enumerate(final.iloc[0]):
-            if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
-               final.iloc[0][idx]= self._rename_dict[re.sub('[ \t]+$','',name)]
+            if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
+            coeffs_dict={}
+            for idx,name in enumerate(coeffs.index):
+                if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
+                    coeffs_dict[name]= self._rename_dict[re.sub('[ \t]+$','',name)]
+            coeffs.rename(index=coeffs_dict,inplace=True)
+            final=pd.concat([tab.head(1),coeffs])
+            for idx,name in enumerate(final.iloc[0]):
+                if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
+                   final.iloc[0][idx]= self._rename_dict[re.sub('[ \t]+$','',name)]
 
-        # Add spacing
-        final=pd.concat([final.iloc[:1],pd.DataFrame(index=[' ']), final.iloc[1:]])
-        final=pd.concat([final,pd.DataFrame(index=[' '])])
+            # Add spacing
+            final=pd.concat([final.iloc[:1],pd.DataFrame(index=[' ']), final.iloc[1:]])
+            final=pd.concat([final,pd.DataFrame(index=[' '])])
 
-        
-        for line in [observ,r2]:
-            final=pd.concat([final,tab[line:].head(1)])
+            
+            for line in [observ,r2]:
+                final=pd.concat([final,tab[line:].head(1)])
 
-        # Inclusive R2s (including fixed effects)
-        final.iloc[-1] = R2s
+            # Inclusive R2s (including fixed effects)
+            final.iloc[-1] = R2s
 
-        effects=pd.DataFrame(index=[time_fe_name, entity_fe_name])
-        some_effects = False
-        for column in tab.columns:
-            for x in tab[column]:
-                if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
-                if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
-        if some_effects: final=pd.concat([final,effects])
-        if custom_row!=None:
-            custom=pd.DataFrame(index=[custom_row[0]])
-            for idx,item in enumerate(custom_row[1:]):
-                custom.at[custom_row[0],final.columns[idx]]=item
-            final=pd.concat([final,custom])
-        final.fillna('',inplace=True)
-        if latex_path!=None:
-            f=open(latex_path,'w')
-            f.write(re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})','c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',\
-                final.to_latex())[0]),final.to_latex()))  
-        return final
+            effects=pd.DataFrame(index=[time_fe_name, entity_fe_name])
+            some_effects = False
+            for column in tab.columns:
+                for x in tab[column]:
+                    if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
+                    if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
+            if some_effects: final=pd.concat([final,effects])
+            if custom_row!=None:
+                custom=pd.DataFrame(index=[custom_row[0]])
+                for idx,item in enumerate(custom_row[1:]):
+                    custom.at[custom_row[0],final.columns[idx]]=item
+                final=pd.concat([final,custom])
+            final.fillna('',inplace=True)
+            if latex_path!=None:
+                f=open(latex_path,'w')
+                f.write(re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})','c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',\
+                    final.to_latex())[0]),final.to_latex()))  
+            return final
