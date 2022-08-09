@@ -144,7 +144,7 @@ class Model():
                     except:
                         return cell
                 coeffs=coeffs.applymap(change_decimals)
-                s = "\{0:0.{0}f\}".format(coeff_decimals)
+                s = "{0:0."+str(coeff_decimals)+"f}"
                 R2s  = [ s.format(x) for x in R2s ]
             else:
                 R2s  = [ "{0:0.4f}".format(x) for x in R2s ]
