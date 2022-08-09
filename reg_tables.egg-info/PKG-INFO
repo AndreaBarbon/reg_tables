@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: reg-tables
-Version: 0.1.8
+Version: 0.1.9
 Summary: A simple linearmodelsextension to run panel regressions with different specifications and export the results in a professional-looking latex table
 Home-page: https://www.abarbon.com
 Download-URL: https://github.com/AndreaBarbon/reg_tables/archive/refs/tags/0.0.5.tar.gz
