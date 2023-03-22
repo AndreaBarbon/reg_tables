@@ -22,8 +22,6 @@ def _str(v: float) -> str:
             else:
                 return "{:.20f}".format(v)
 
-# def _str(v: float) -> str:
-#                 return "{:.20f}".format(v)
                 
 class PanelModelComparisonNew(PanelModelComparison):
 
