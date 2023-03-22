@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: reg-tables
-Version: 0.1.9
+Version: 0.1.10
 Summary: A simple linearmodelsextension to run panel regressions with different specifications and export the results in a professional-looking latex table
 Home-page: https://www.abarbon.com
 Download-URL: https://github.com/AndreaBarbon/reg_tables/archive/refs/tags/0.0.5.tar.gz
@@ -79,6 +79,6 @@ res
 
 This package consists of two classes: `Spec` and `Model`. 
 
-`Spec` defines the regression specifications, including the panel dataset, the independent variable, and the independent variables. Optional arguments for this class include specifying whether the regressions should be performed with entity effects, time effects or both (`entity_effects`, `time_effects` or `all_effects` arguments respectively). Methods for `Spec` class include `.run`, which runs the regression and `.rename` – a method to rename variable according to the dictionary passed.
+`Spec` defines the regression specifications, including the panel dataset, the independent variable, and the independent variables. Optional arguments for this class include specifying whether the regressions should be performed with entity effects, time effects or both (`entity_effects`, `time_effects` or `all_effects` arguments respectively). Methods for `Spec` class include `.run`, which runs the regression and `.rename` â€“ a method to rename variable according to the dictionary passed.
 
 The `Model` class is a wrapper around the `compare` function of linearmodels. When creating `Model`, one has to specify the baseline regression specification, passed as a `Spec` object. Optional arguments include passing a `rename_dict`, according to which the variables are going to be renamed, as well as setting an `all_effects` Boolean variable, which will add the four versions of baseline Spec object with all possible combinations of entity and time effects to the model. The `Model` class has `.rename`, `.add_spec` and `.remove_spec` methods. The latter has a mandatory index argument and second optional index argument, which, if passed would work as a end point for slice.  The `.run` method executes all Spec objects within Model and outputs them to a table. Optional argument `coeff_decimals` allows to specify the number of decimals for coefficient estimates and t-values, while `latex_path` allows to save the output table to a disk.

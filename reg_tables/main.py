@@ -1,6 +1,6 @@
 import warnings
 from linearmodels import PanelOLS
-from linearmodels.panel import compare
+from reg_tables.utils import compare
 from statsmodels.tools.tools import add_constant
 import copy
 import io
@@ -116,10 +116,14 @@ class Model():
                 if isinstance (custom_row,list)!=True:
                     print('Custom row is not a list')
             regs = [ spec.run() for spec in self.specs ]
+            
+
+
             R2s  = [ reg.rsquared_inclusive for reg in regs ]
             regs= compare(regs, stars=True, precision='tstats')
             csv = regs.summary.as_csv()
             tab = pd.read_csv(io.StringIO(csv), skiprows=1)
+            
             tab = tab.set_index([tab.columns[0]])
             col_dict=dict(zip(tab.columns.to_list(), list(map(lambda x:'('+str(int(x.replace(' ','').replace('Model',''))+1)+')',tab.columns.to_list()))))
             coeff_borders=[]
@@ -140,8 +144,11 @@ class Model():
             if coeff_decimals!=None:
                 def change_decimals(cell):
                     try:
-                        return re.sub('^-?[0-9]*\.[0-9]*',str(round(float(re.search('^-?[0-9]*\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
-                    except:
+                        if '(' in cell:
+                            return '('+re.sub('\(-?[0-9]*\.[0-9]*',str(round(float(re.search('\(-?[0-9]*\.[0-9]*' ,cell)[0][1:]),coeff_decimals)),cell)
+                        else:
+                            return re.sub('^-?[0-9]*\.[0-9]*',str(round(float(re.search('^-?[0-9]*\.[0-9]*' ,cell)[0]),coeff_decimals)),cell)
+                    except TypeError:
                         return cell
                 coeffs=coeffs.applymap(change_decimals)
                 s = "{0:0."+str(coeff_decimals)+"f}"
@@ -149,8 +156,10 @@ class Model():
             else:
                 R2s  = [ "{0:0.4f}".format(x) for x in R2s ]
 
-            if const!=0:coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
+            if const!=0:
+                coeffs=pd.concat([coeffs[2:],coeffs[0:2]])
             coeffs_dict={}
+            
             for idx,name in enumerate(coeffs.index):
                 if re.sub('[ \t]+$','',name) in self._rename_dict.keys():
                     coeffs_dict[name]= self._rename_dict[re.sub('[ \t]+$','',name)]
@@ -178,14 +187,19 @@ class Model():
                     if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
                     if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
             if some_effects: final=pd.concat([final,effects])
-            if custom_row!=None:
-                custom=pd.DataFrame(index=[custom_row[0]])
+            if custom_row != None:
+                custom = pd.DataFrame(index=[custom_row[0]])
                 for idx,item in enumerate(custom_row[1:]):
                     custom.at[custom_row[0],final.columns[idx]]=item
-                final=pd.concat([final,custom])
+                final = pd.concat([final,custom])
             final.fillna('',inplace=True)
-            if latex_path!=None:
-                f=open(latex_path,'w')
-                f.write(re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})','c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',\
-                    final.style.to_latex())[0]),final.style.to_latex()))  
+            if latex_path != None:
+                latex_string = re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})',
+                                    'c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',
+                                    final.style.to_latex())[0]),final.style.to_latex())
+                latex_string = re.sub('{lcccc}\n','{lcccc}\n\\\\toprule\n{}',latex_string)
+                latex_string = re.sub('\nD','\n\\\midrule\nD',latex_string)
+                latex_string = re.sub('\n\\\end{tabular}\n','\n\\\\bottomrule\n\\\end{tabular}\n',latex_string)
+                f = open(latex_path,'w')
+                f.write(latex_string)  
             return final
