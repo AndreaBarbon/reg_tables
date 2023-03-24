@@ -151,7 +151,28 @@ class Model():
         Parameters
         ----------
         **kwargs:
-            kwargs describing the models 
+            kwargs describing the models. Possible arguments :
+                y : str
+                    Name of the column with 'y' variable
+                x_vars : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
+                    Name of the columns with 'x' variables
+                entity_effects : bool
+                    Peform regression with entity effects
+                time_effects : bool
+                    Peform regression with time effects
+                all_effects : bool
+                    Peform regression both with entity and time effects
+                cluster_entity : bool
+                    Cluster standard errors by entity
+                cluster_time : bool
+                    Cluster standard errors by time
+                double_cluster : bool
+                    Cluster standard errors bith by entity and time
+                intercept : bool
+                    Include intercept in the regression
+                check_rank : bool
+                    Check rank during regression
+        
         Examples
         --------
 
