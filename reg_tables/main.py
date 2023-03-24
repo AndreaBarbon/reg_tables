@@ -10,6 +10,31 @@ import re
 class Spec():
     """
     Contains specification of regression
+
+    Parameters
+    ----------
+    data : {np.ndarray, pd.DataFrame}
+        Dataset from which 'x' and 'y' variables are going to be sourced from
+    y : str
+        Name of the column with 'y' variable
+    x_vars : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
+        Name of the columns with 'x' variables
+    entity_effects : bool
+        Peform regression with entity effects
+    time_effects : bool
+        Peform regression with time effects
+    all_effects : bool
+        Peform regression both with entity and time effects
+    cluster_entity : bool
+        Cluster standard errors by entity
+    cluster_time : bool
+        Cluster standard errors by time
+    double_cluster : bool
+        Cluster standard errors bith by entity and time
+    intercept : bool
+        Include intercept in the regression
+    check_rank : bool
+        Check rank during regression
     """
 
     def __init__(self, 
@@ -45,7 +70,15 @@ class Spec():
                 Check rank: {self.check_rank}')  
 
     def run(self):
-            
+        """
+        Run this regression
+        
+        Returns
+        -------
+        PanelEffectsResults
+            The panel effects results object.
+        
+        """             
         reg = PanelOLS(
                 self.data[[self.y]],
                 add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
@@ -63,6 +96,15 @@ class Spec():
 class Model():
     """
     Contains multiple Spec objects
+
+    Parameters
+    ----------
+    baseline : Spec
+        First regression of the model
+    rename_dict : dict
+        Rename columns with the variables
+    all_effects : bool
+        Peform all regressions both with entity and time effects
     """
     def __init__(self, baseline, rename_dict={}, all_effects=False):
         self._rename_dict = rename_dict#add check
@@ -86,12 +128,37 @@ class Model():
         return strr
     
     def remove_spec (self, idx1, idx2=None):
+        """
+        Remove regression from the model
+
+        Parameters
+        ----------
+        idx1 : {float, int}
+            Index of the model that needs to be removed 
+            (numeration starts from 1)
+        idx2 : {float, int}
+            If passed a slice of [idx1:idx2] will be removed 
+            (numeration starts from 1)
+        """
         if idx2 != None:del self.specs[idx1-1:idx2-1] 
         else:
             del self.specs[idx1-1] 
 
-    def add_spec( self, **kwargs):
-        
+    def add_spec(self, **kwargs):
+        """
+        Add specs to the model
+
+        Parameters
+        ----------
+        **kwargs:
+            kwargs describing the models 
+        Examples
+        --------
+
+        >>> model.add_spec(y='y2', entity_effects=True)
+        >>> model.add_spec(y='y2', time_effects=True) 
+
+        """
         new_spec = copy.deepcopy(self.baseline)
         try:
             if isinstance(kwargs[x_vars],(list,dict,set,tuple,np.ndarray,pd.core.series.Series)) != True:
@@ -114,9 +181,41 @@ class Model():
         else:self.specs.append(new_spec)
         
     def rename(self, rename_dict):
+        """
+        Rename the variables in the output table
+
+        Parameters
+        ----------
+        rename_dict : dict
+            Rename columns with the variables
+        """
         for key in rename_dict.keys(): self._rename_dict[key] = rename_dict[key]
         
-    def run(self,coeff_decimals=None,latex_path=None,time_fe_name='Time FEs', entity_fe_name='Entity FEs', custom_row=None):
+    def run(self,coeff_decimals=None,latex_path=None,
+            time_fe_name='Time FEs', entity_fe_name='Entity FEs',
+            custom_row=None):
+        """
+        Run all regressions in the models
+
+        Parameters
+        ----------
+        coeff_decimals : int
+            Display the numbers in the results table 
+            with certain number of fraction digits
+        latex_path : str
+            Write the table in LaTeX format to specified path
+        time_fe_name : str
+            Name for time fixed effects column
+        entity_fe_name : str
+            Name for entity fixed effects column
+        custom_row : str
+            Adds a custom row to the end of the table
+
+        Returns
+        -------
+        pd.DataFrame
+            Table with the results of the regressions
+        """
         with warnings.catch_warnings():
             warnings.filterwarnings(
             "ignore",
