@@ -4,7 +4,7 @@ with open("README.md", "r") as fh: long_description = fh.read()
 
 setuptools.setup(
     name="reg_tables",                     
-    version="0.1.13",
+    version="0.1.14",
     author="Andrea Barbon, Kirill Kazakov",                     
     author_email='andrea.3arbon@gmail.com',
     url = 'https://www.abarbon.com',
@@ -27,5 +27,6 @@ setuptools.setup(
     py_modules=["reg_tables"],            
     install_requires=['numpy',
     'pandas',
-    'linearmodels']
+    'linearmodels',
+    'varname']
 )

@@ -1,12 +1,15 @@
 import warnings
 from linearmodels import PanelOLS
-from reg_tables.utils import compare, get_df_name
+from reg_tables.utils import compare
 from statsmodels.tools.tools import add_constant
 import copy
 import io
 import pandas as pd
 import numpy as np
-import re 
+import re
+from varname import argname
+
+
 class Spec():
     """
     Contains specification of regression
@@ -44,7 +47,7 @@ class Spec():
             intercept=True,check_rank=True
         ):
         self.data = data
-        self.data_name = get_df_name(data)
+        self.data_name = argname('data')
         self.y = y
         if isinstance(x_vars, (list, dict, set, tuple,
                                np.ndarray, pd.core.series.Series)) != True: x_vars = [x_vars]

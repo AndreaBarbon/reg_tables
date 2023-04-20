@@ -7,9 +7,6 @@ from linearmodels.iv.results import default_txt_fmt, stub_concat, table_concat
 from statsmodels.iolib.summary import SimpleTable
 import numpy as np
 
-def get_df_name(df):
-    name =[x for x in globals() if globals()[x] is df][0]
-    return name 
 
 def _str(v: float) -> str:
             if np.isnan(v):
