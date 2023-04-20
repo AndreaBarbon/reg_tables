@@ -1,6 +1,6 @@
 import warnings
 from linearmodels import PanelOLS
-from reg_tables.utils import compare
+from reg_tables.utils import compare, get_df_name
 from statsmodels.tools.tools import add_constant
 import copy
 import io
@@ -44,6 +44,7 @@ class Spec():
             intercept=True,check_rank=True
         ):
         self.data = data
+        self.data_name = get_df_name(data)
         self.y = y
         if isinstance(x_vars, (list, dict, set, tuple,
                                np.ndarray, pd.core.series.Series)) != True: x_vars = [x_vars]
@@ -59,7 +60,8 @@ class Spec():
         if (time_effects or entity_effects): intercept=False
 
     def __repr__(self):
-        return (f'x-vars: {self.x_vars}, y: {self.y},\
+        return (f'dataset : {self.data_name}\
+                x-vars: {self.x_vars}, y: {self.y},\
                 Entity Effects: {self.entity_effects},\
                 Time Effects: {self.time_effects},\
                 All Effects: {self.all_effects},\
@@ -68,6 +70,15 @@ class Spec():
                 Double Cluster: {self.double_cluster},\
                 Intercept: {self.intercept},\
                 Check rank: {self.check_rank}')  
+
+    def to_model(self, model):
+        """
+        Adds the current spec to specified model
+        """
+        if isinstance(model, Model):
+            model.add_spec(self)
+        else:
+            raise TypeError('Please provide a Model object as argument')
 
     def run(self):
         """
@@ -143,63 +154,36 @@ class Model():
         if idx2 != None:del self.specs[idx1-1:idx2-1] 
         else:
             del self.specs[idx1-1] 
-
-    def add_spec(self, **kwargs):
+    
+    def add_spec(self, *args, all_effects = False):
         """
-        Add specs to the model
+        Add spec to the model
 
         Parameters
         ----------
-        **kwargs:
-            kwargs describing the models. Possible arguments :
-                y : str
-                    Name of the column with 'y' variable
-                x_vars : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
-                    Name of the columns with 'x' variables
-                entity_effects : bool
-                    Peform regression with entity effects
-                time_effects : bool
-                    Peform regression with time effects
-                all_effects : bool
-                    Peform regression both with entity and time effects
-                cluster_entity : bool
-                    Cluster standard errors by entity
-                cluster_time : bool
-                    Cluster standard errors by time
-                double_cluster : bool
-                    Cluster standard errors bith by entity and time
-                intercept : bool
-                    Include intercept in the regression
-                check_rank : bool
-                    Check rank during regression
-        
-        Examples
-        --------
-
-        >>> model.add_spec(y='y2', entity_effects=True)
-        >>> model.add_spec(y='y2', time_effects=True) 
-
+        *args:
+            args that include Spec objects to be added. Possible arguments :
+                spec : Spec
+                    Regression spec to be added
         """
-        new_spec = copy.deepcopy(self.baseline)
-        try:
-            if isinstance(kwargs[x_vars],(list,dict,set,tuple,np.ndarray,pd.core.series.Series)) != True:
-                kwargs[x_vars] = [x_vars] 
-        except:pass
-        for key in kwargs: setattr(new_spec, key, kwargs[key])
-
-        if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept = False
-
-        
-        if 'all_effects' in kwargs:
-            for comb in [(False, False), (True, False), (False, True), (True, True)]:
-                variation = copy.deepcopy(new_spec)
-                variation.entity_effects = comb[0]
-                variation.time_effects = comb[1]
-                variation.intercept = False
-                self.specs.append(variation)
+        for obj in args:
+            if isinstance(obj, Spec):
+                continue
+            else:
+                raise TypeError(f'{obj} is not a Spec object')
+        for obj in args:
+                    if all_effects == True:
+                        for comb in [(False, False), (True, False), (False, True), (True, True)]:
+                            variation = copy.deepcopy(obj)
+                            variation.entity_effects = comb[0]
+                            variation.time_effects = comb[1]
+                            variation.intercept = False
+                            self.specs.append(variation)
 
 
-        else:self.specs.append(new_spec)
+                    else:self.specs.append(obj)
+
+
         
     def rename(self, rename_dict):
         """
@@ -322,6 +306,9 @@ class Model():
                     if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
                     if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
             if some_effects: final=pd.concat([final,effects])
+            data_info = pd.DataFrame(data=[[spec.data_name for spec in self.specs]]
+                                    , columns=final.columns, index=['Dataset'])
+            final = pd.concat([final, data_info])
             if custom_row != None:
                 custom = pd.DataFrame(index=[custom_row[0]])
                 for idx,item in enumerate(custom_row[1:]):
