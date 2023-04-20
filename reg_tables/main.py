@@ -201,7 +201,7 @@ class Model():
         
     def run(self,coeff_decimals=None,latex_path=None,
             time_fe_name='Time FEs', entity_fe_name='Entity FEs',
-            custom_row=None):
+            custom_row=None, display_datasets=False):
         """
         Run all regressions in the models
 
@@ -218,6 +218,11 @@ class Model():
             Name for entity fixed effects column
         custom_row : str
             Adds a custom row to the end of the table
+        display_datasets : {bool,list}
+            Display the names of databases in the results table. 
+            If the value is 'True' then use original names of variables.
+            Pass a list of strings to define custom names for databases.
+
 
         Returns
         -------
@@ -309,9 +314,15 @@ class Model():
                     if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
                     if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
             if some_effects: final=pd.concat([final,effects])
-            data_info = pd.DataFrame(data=[[spec.data_name for spec in self.specs]]
-                                    , columns=final.columns, index=['Dataset'])
-            final = pd.concat([final, data_info])
+
+            if display_datasets != False:
+                if display_datasets == True:
+                    data_info = pd.DataFrame(data=[[spec.data_name for spec in self.specs]]
+                                            , columns=final.columns, index=['Dataset'])
+                else:
+                    data_info = pd.DataFrame(data=[display_datasets]
+                        , columns=final.columns, index=['Dataset'])
+                final = pd.concat([final, data_info])
             if custom_row != None:
                 custom = pd.DataFrame(index=[custom_row[0]])
                 for idx,item in enumerate(custom_row[1:]):
