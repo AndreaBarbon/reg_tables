@@ -1,6 +1,6 @@
 import warnings
 from linearmodels import PanelOLS
-from reg_tables.utils import compare
+from reg_tables.utils import compare, align_latex_table
 from statsmodels.tools.tools import add_constant
 import copy
 import io
@@ -369,6 +369,7 @@ class Model():
                 latex_string = re.sub('{lcccc}\n','{lcccc}\n\\\\toprule\n{}', latex_string)
                 latex_string = re.sub('\nD','\n\\\midrule\nD', latex_string)
                 latex_string = re.sub('\n\\\end{tabular}\n','\n\\\\bottomrule\n\\\end{tabular}\n', latex_string)
+                latex_string = align_latex_table(latex_string)
                 f = open(latex_path, 'w')
                 f.write(latex_string)  
             return final
