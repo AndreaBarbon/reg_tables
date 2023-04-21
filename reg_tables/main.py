@@ -45,10 +45,10 @@ class Spec():
             data, y, x_vars, 
             entity_effects=False, time_effects=False, all_effects=False,
             cluster_entity=False, cluster_time=False, double_cluster=False,
-            intercept=True,check_rank=True
+            intercept=True,check_rank=True, data_name=None
         ):
         self.data = data
-        if data_name !=None:
+        if data_name != None:
             self.data_name = data_name
         else:
             try:
