@@ -4,7 +4,7 @@ with open("README.md", "r") as fh: long_description = fh.read()
 
 setuptools.setup(
     name="reg_tables",                     
-    version="0.1.15",
+    version="0.1.16",
     author="Andrea Barbon, Kirill Kazakov",                     
     author_email='andrea.3arbon@gmail.com',
     url = 'https://www.abarbon.com',

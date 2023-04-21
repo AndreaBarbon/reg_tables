@@ -158,33 +158,66 @@ class Model():
         else:
             del self.specs[idx1-1] 
     
-    def add_spec(self, *args, all_effects = False):
+    def add_spec(self, **kwargs):
         """
-        Add spec to the model
-
+        Add specs to the model
         Parameters
         ----------
-        *args:
-            args that include Spec objects to be added. Possible arguments :
-                spec : Spec
-                    Regression spec to be added
+        **kwargs:
+            kwargs describing the models. Possible arguments :
+                data : {np.ndarray, pd.DataFrame}
+                    Dataset from which 'x' and 'y' variables are going to be sourced from
+                y : str
+                    Name of the column with 'y' variable
+                x_vars : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
+                    Name of the columns with 'x' variables
+                entity_effects : bool
+                    Peform regression with entity effects
+                time_effects : bool
+                    Peform regression with time effects
+                all_effects : bool
+                    Peform regression both with entity and time effects
+                cluster_entity : bool
+                    Cluster standard errors by entity
+                cluster_time : bool
+                    Cluster standard errors by time
+                double_cluster : bool
+                    Cluster standard errors bith by entity and time
+                intercept : bool
+                    Include intercept in the regression
+                check_rank : bool
+                    Check rank during regression
+        
+        Examples
+        --------
+        >>> model.add_spec(y='y2', entity_effects=True)
+        >>> model.add_spec(y='y2', time_effects=True) 
         """
-        for obj in args:
-            if isinstance(obj, Spec):
-                continue
-            else:
-                raise TypeError(f'{obj} is not a Spec object')
-        for obj in args:
-                    if all_effects == True:
-                        for comb in [(False, False), (True, False), (False, True), (True, True)]:
-                            variation = copy.deepcopy(obj)
-                            variation.entity_effects = comb[0]
-                            variation.time_effects = comb[1]
-                            variation.intercept = False
-                            self.specs.append(variation)
+        new_spec = copy.deepcopy(self.baseline)
+        try:
+            if isinstance(kwargs[x_vars],(list,dict,set,tuple,np.ndarray,pd.core.series.Series)) != True:
+                kwargs[x_vars] = [x_vars] 
+        except:pass
+
+        if 'data' in kwargs.keys():
+            new_spec.data_name = argname('kwargs[data]')
 
 
-                    else:self.specs.append(obj)
+        for key in kwargs: setattr(new_spec, key, kwargs[key])
+
+        if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept = False
+
+        
+        if 'all_effects' in kwargs:
+            for comb in [(False, False), (True, False), (False, True), (True, True)]:
+                variation = copy.deepcopy(new_spec)
+                variation.entity_effects = comb[0]
+                variation.time_effects = comb[1]
+                variation.intercept = False
+                self.specs.append(variation)
+
+
+        else:self.specs.append(new_spec)
 
 
         
