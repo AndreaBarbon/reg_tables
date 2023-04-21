@@ -8,7 +8,8 @@ import pandas as pd
 import numpy as np
 import re
 from varname import argname
-
+from varname.utils import ImproperUseError
+from ast import Subscript
 
 class Spec():
     """
@@ -47,7 +48,14 @@ class Spec():
             intercept=True,check_rank=True
         ):
         self.data = data
-        self.data_name = argname('data')
+        if data_name !=None:
+            self.data_name = data_name
+        else:
+            try:
+                self.data_name = argname('data')
+            except ImproperUseError:
+                print("Can't retrieve name of dataset. Using default value. Rename the dataset or provide a 'data_name' argument.")
+                self.data_name = 'data'
         self.y = y
         if isinstance(x_vars, (list, dict, set, tuple,
                                np.ndarray, pd.core.series.Series)) != True: x_vars = [x_vars]
@@ -201,6 +209,11 @@ class Model():
 
         if 'data' in kwargs.keys():
             new_spec.data_name = argname('kwargs[data]')
+            if isinstance(new_spec.data_name, Subscript):
+                if 'data_name' not in kwargs.keys():
+                    new_spec.data_name = 'data'
+                    print("Can't retrieve name of dataset. Using default value. Rename the dataset or provide a 'data_name' argument.")
+
 
 
         for key in kwargs: setattr(new_spec, key, kwargs[key])
