@@ -6,7 +6,7 @@ from linearmodels.shared.io import add_star, pval_format
 from linearmodels.iv.results import default_txt_fmt, stub_concat, table_concat
 from statsmodels.iolib.summary import SimpleTable
 import numpy as np
-
+import re
 
 def align_latex_table(table):
     lines = table.split('\n')
