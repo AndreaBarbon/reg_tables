@@ -383,7 +383,7 @@ class Model():
                 # latex_string = re.sub('{lcccc}\n','{lcccc}\n\\\\toprule\n{}', latex_string)
                 # latex_string = re.sub('\nD','\n\\\midrule\nD', latex_string)
                 # latex_string = re.sub('\n\\\end{tabular}\n','\n\\\\bottomrule\n\\\end{tabular}\n', latex_string)
-                latex_string = align_latex_table(latex_string)
+                latex_string = align_latex_table(latex_string).replace('\\\\ \n',' \\\\\n')
                 with open(latex_path, 'w') as f:
                     f.write(latex_string)   
             return final
