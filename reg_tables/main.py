@@ -376,13 +376,14 @@ class Model():
                 final = pd.concat([final,custom])
             final.fillna('', inplace=True)
             if latex_path != None:
-                latex_string = re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})',
-                                    'c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',
-                                    final.style.to_latex())[0]),final.style.to_latex())
-                latex_string = re.sub('{lcccc}\n','{lcccc}\n\\\\toprule\n{}', latex_string)
-                latex_string = re.sub('\nD','\n\\\midrule\nD', latex_string)
-                latex_string = re.sub('\n\\\end{tabular}\n','\n\\\\bottomrule\n\\\end{tabular}\n', latex_string)
+                latex_string = final.to_latex(column_format = 'l'+ ((final.shape[1])*'c'))
+                # latex_string = re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})',
+                #                     'c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',
+                #                     final.style.to_latex())[0]),final.style.to_latex())
+                # latex_string = re.sub('{lcccc}\n','{lcccc}\n\\\\toprule\n{}', latex_string)
+                # latex_string = re.sub('\nD','\n\\\midrule\nD', latex_string)
+                # latex_string = re.sub('\n\\\end{tabular}\n','\n\\\\bottomrule\n\\\end{tabular}\n', latex_string)
                 latex_string = align_latex_table(latex_string)
-                f = open(latex_path, 'w')
-                f.write(latex_string)  
+                with open(latex_path, 'w') as f:
+                    f.write(latex_string)   
             return final

@@ -9,56 +9,47 @@ import numpy as np
 
 
 def align_latex_table(table):
-    # Get the number of columns in the table
-    num_cols = table.count("&") + 1
-
-    # Initialize a list to store the maximum length of all entries for each column
-    max_lengths = [0] * num_cols
-
-    # Loop over each line in the table
-    lines = table.split("\n")
-    last_idx = lines.index(list(filter(lambda x: 'Observations ' in x, lines))[0])-1
-    for line in lines:
-        # Ignore lines that don't have any "&" characters
-        if "&" not in line:
-            continue
-        
-
-
-        # Split the line into separate entries
-        entries = line.split("&")
-
-        # Update the maximum length for each column
-        for i, entry in enumerate(entries):
-            max_lengths[i] = max(max_lengths[i], len(entry.strip()))
-    # Create a new LaTeX string with the same number of columns as the original
-    new_lines = []
+    lines = table.split('\n')
+    start_idx = lines.index(list(filter(lambda x: '{} &' in x, lines))[0])
+    end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])
+    columns = lines[start_idx].count('&')+1
+    max_len = [0] * columns
     for idx, line in enumerate(lines):
-        # Ignore lines that don't have any "&" characters
-        if "&" not in line:
+        if (idx < start_idx) | (idx > end_idx):
+            continue
+
+        if '&' not in line:
+            continue
+        
+        items = line.split('&')
+        for item_idx,item in enumerate(items):
+            if len(item)> max_len[item_idx]:
+                max_len[item_idx] = len(item)
+
+    new_lines = []    
+    for idx, line in enumerate(lines):
+        if (idx < start_idx) | (idx > end_idx):
+            new_lines.append(line)
+            continue
+
+        if '&' not in line:
             new_lines.append(line)
             continue
         
-        if (idx<5) | (idx>=last_idx) :
-            new_lines.append(line)
-            continue
-
-
-        # Split the line into separate entries
-        entries = line.split("&")
-
-        # Replace each entry with a padded version of the same length
-        new_entries = []
-        for i, entry in enumerate(entries):
-            padding = " " * (max_lengths[i] - len(entry.strip()))
-            new_entry = entry.strip() + padding
-            new_entries.append(new_entry)
-
-        # Join the padded entries back together with "&" characters
-        new_line = " & ".join(new_entries)
-        new_lines.append(new_line)
-
-    # Join all the lines back together with "\n" characters
+        items = line.split('&')
+        new_line = []
+        for item_idx, item in enumerate(items):
+            if len(item) == max_len[item_idx]:
+                new_line.append(item)
+            else:
+                if item_idx == len(max_len):
+                    item = item + ' '*(max_len[item_idx] - len(item) -4) + '\\\\'
+                    new_line.append(item)
+                else:
+                    item = item + ' '*(max_len[item_idx] - len(item))
+                    new_line.append(item)
+        
+        new_lines.append('&'.join(new_line))
     new_table = "\n".join(new_lines)
 
     return new_table
