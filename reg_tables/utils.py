@@ -10,11 +10,38 @@ import numpy as np
 
 def align_latex_table(table):
     lines = table.split('\n')
-    start_idx = lines.index(list(filter(lambda x: '{} &' in x, lines))[0])
-    end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])
+    start_idx = lines.index(list(filter(lambda x: '{}' in x, lines))[0])
+    end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])+1
     columns = lines[start_idx].count('&')+1
     max_len = [0] * columns
+    f_lines = []
+    #changhing lines formatting  
     for idx, line in enumerate(lines):
+        if (idx < start_idx) | (idx > end_idx):
+            f_lines.append(line)
+            continue
+
+        if '&' not in line:
+            f_lines.append(line)
+            continue
+        
+        items = line.split('&')
+        new_line = []
+        for item_idx, item in enumerate(items):
+            if '\\\\' in item:
+                item = item.replace('\\\\','')
+            try:
+                item_0 = re.search(r"\S", item).span()[0]
+            except Exception:
+                new_line.append(' ')
+                continue
+            item_1 = re.search(r"\S\s*$", item).span()[0]+1
+            new_item = item[item_0:item_1]
+            new_line.append(' '+new_item+' ')
+        f_lines.append('&'.join(new_line))
+
+
+    for idx, line in enumerate(f_lines):
         if (idx < start_idx) | (idx > end_idx):
             continue
 
@@ -23,11 +50,14 @@ def align_latex_table(table):
         
         items = line.split('&')
         for item_idx,item in enumerate(items):
-            if len(item)> max_len[item_idx]:
-                max_len[item_idx] = len(item)
+            length = len(item)
+            if item_idx == len(max_len)-1:
+                length += 4
+            if length> max_len[item_idx]:
+                max_len[item_idx] = length
 
     new_lines = []    
-    for idx, line in enumerate(lines):
+    for idx, line in enumerate(f_lines):
         if (idx < start_idx) | (idx > end_idx):
             new_lines.append(line)
             continue
@@ -40,13 +70,16 @@ def align_latex_table(table):
         new_line = []
         for item_idx, item in enumerate(items):
             if len(item) == max_len[item_idx]:
+                if item_idx == len(max_len)-1:
+                    item = item[:-4] + '\\\\'
                 new_line.append(item)
             else:
-                if item_idx == len(max_len):
+                if item_idx == len(max_len)-1:
                     item = item + ' '*(max_len[item_idx] - len(item) -4) + '\\\\'
                     new_line.append(item)
                 else:
                     item = item + ' '*(max_len[item_idx] - len(item))
+                    
                     new_line.append(item)
         
         new_lines.append('&'.join(new_line))
