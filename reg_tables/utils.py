@@ -10,7 +10,7 @@ import re
 
 def align_latex_table(table):
     lines = table.split('\n')
-    start_idx = lines.index(list(filter(lambda x: '{}' in x, lines))[0])
+    start_idx = lines.index(list(filter(lambda x: '&' in x, lines))[0])
     end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])+1
     columns = lines[start_idx].count('&')+1
     max_len = [0] * columns
@@ -69,6 +69,8 @@ def align_latex_table(table):
         items = line.split('&')
         new_line = []
         for item_idx, item in enumerate(items):
+
+
             if len(item) == max_len[item_idx]:
                 if item_idx == len(max_len)-1:
                     item = item[:-4] + '\\\\'
@@ -84,7 +86,6 @@ def align_latex_table(table):
         
         new_lines.append('&'.join(new_line))
     new_table = "\n".join(new_lines)
-
     return new_table
 
 

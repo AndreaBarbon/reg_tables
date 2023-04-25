@@ -376,7 +376,7 @@ class Model():
                 final = pd.concat([final,custom])
             final.fillna('', inplace=True)
             if latex_path != None:
-                latex_string = final.to_latex(column_format = 'l'+ ((final.shape[1])*'c'))
+                latex_string = final.style.to_latex(column_format = 'l'+ ((final.shape[1])*'c'), hrules=True)
                 # latex_string = re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})',
                 #                     'c'*len(re.search('(?<=\{tabular\}\{l)(.*?)(?=\})',
                 #                     final.style.to_latex())[0]),final.style.to_latex())
