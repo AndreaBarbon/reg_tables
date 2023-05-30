@@ -11,7 +11,10 @@ import re
 def align_latex_table(table):
     lines = table.split('\n')
     start_idx = lines.index(list(filter(lambda x: '&' in x, lines))[0])
-    end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])+1
+    try:
+        end_idx = lines.index(list(filter(lambda x: 'Entity FEs ' in x, lines))[0])+1
+    except IndexError:
+        end_idx = lines.index(list(filter(lambda x: 'R-squared ' in x, lines))[0])+1
     columns = lines[start_idx].count('&')+1
     max_len = [0] * columns
     f_lines = []
