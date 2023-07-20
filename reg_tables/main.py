@@ -311,7 +311,7 @@ class Model():
 
 
             other_eff_dict = {}
-            for idx, spec in enumerate(model.specs):
+            for idx, spec in enumerate(self.specs):
                 if spec.other_effects != None:
                     other_eff_dict[idx] = spec.other_effects
             if other_eff_dict != {}:
