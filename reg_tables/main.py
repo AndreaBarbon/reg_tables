@@ -26,8 +26,10 @@ class Spec():
         Peform regression with entity effects
     time_effects : bool
         Peform regression with time effects
-    all_effects : bool
+    time_entity_effects : bool
         Peform regression both with entity and time effects
+    other_effects : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
+        Category codes to use for any effects that are not entity or time effects. Each variable is treated as an effect.
     cluster_entity : bool
         Cluster standard errors by entity
     cluster_time : bool
@@ -42,9 +44,9 @@ class Spec():
 
     def __init__(self, 
             data, y, x_vars, 
-            entity_effects=False, time_effects=False, all_effects=False,
-            cluster_entity=False, cluster_time=False, double_cluster=False,
-            intercept=True,check_rank=True, data_name=None
+            entity_effects=False, time_effects=False, time_entity_effects=False,
+            cluster_entity=False, other_effects=None, cluster_time=False, 
+            double_cluster=False, intercept=True,check_rank=True, data_name=None
         ):
         self.data = data
         if data_name != None:
@@ -61,7 +63,8 @@ class Spec():
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
-        self.all_effects = all_effects
+        self.time_entity_effects = time_entity_effects
+        self.other_effects = other_effects
         self.cluster_entity = cluster_entity
         self.cluster_time = cluster_time
         self.double_cluster = double_cluster
@@ -74,7 +77,8 @@ class Spec():
                 x-vars: {self.x_vars}, y: {self.y},\
                 Entity Effects: {self.entity_effects},\
                 Time Effects: {self.time_effects},\
-                All Effects: {self.all_effects},\
+                Time and Entity Effects: {self.time_entity_effects},\
+                Other Effects: {self.other_effects},\
                 Cluster Entity: {self.cluster_entity},\
                 Cluster Time: {self.cluster_time},\
                 Double Cluster: {self.double_cluster},\
@@ -99,18 +103,29 @@ class Spec():
         PanelEffectsResults
             The panel effects results object.
         
-        """             
-        reg = PanelOLSNew(
-                self.data[[self.y]],
-                add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
-                entity_effects = self.entity_effects, 
-                time_effects = self.time_effects,
-                
-            ).fit(
-            cov_type='clustered', 
-            cluster_entity=(self.cluster_entity | self.double_cluster),
-            cluster_time=(self.cluster_time   | self.double_cluster)
-        )
+        """
+        if self.other_effects != None:             
+            reg = PanelOLSNew(
+                    self.data[[self.y]],
+                    add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
+                    entity_effects = self.entity_effects, 
+                    time_effects = self.time_effects,
+                ).fit(
+                cov_type='clustered', 
+                cluster_entity=(self.cluster_entity | self.double_cluster),
+                cluster_time=(self.cluster_time   | self.double_cluster)
+            )
+        else:
+            reg = PanelOLSNew(
+                    self.data[[self.y]],
+                    add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
+                    entity_effects = self.entity_effects, 
+                    time_effects = self.time_effects
+                ).fit(
+                cov_type='clustered', 
+                cluster_entity=(self.cluster_entity | self.double_cluster),
+                cluster_time=(self.cluster_time   | self.double_cluster)
+            )
         return reg
     
                 
@@ -124,15 +139,15 @@ class Model():
         First regression of the model
     rename_dict : dict
         Rename columns with the variables
-    all_effects : bool
+    time_entity_effects : bool
         Peform all regressions both with entity and time effects
     """
-    def __init__(self, baseline, rename_dict={}, all_effects=False):
+    def __init__(self, baseline, rename_dict={}, time_entity_effects=False):
         self._rename_dict = rename_dict#add check
         baseline.intercept = True
         self.baseline = baseline
         self.specs = []
-        if all_effects:
+        if time_entity_effects:
             for comb in [(False, False), (True, False), (False, True), (True, True)]:
                 new_spec = copy.deepcopy(self.baseline)
                 new_spec.entity_effects = comb[0]
@@ -182,8 +197,10 @@ class Model():
                     Peform regression with entity effects
                 time_effects : bool
                     Peform regression with time effects
-                all_effects : bool
+                time_entity_effects : bool
                     Peform regression both with entity and time effects
+                other_effects : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
+                    Category codes to use for any effects that are not entity or time effects. Each variable is treated as an effect.
                 cluster_entity : bool
                     Cluster standard errors by entity
                 cluster_time : bool
@@ -220,7 +237,7 @@ class Model():
         if (new_spec.time_effects or new_spec.entity_effects): new_spec.intercept = False
 
         
-        if 'all_effects' in kwargs:
+        if 'time_entity_effects' in kwargs:
             for comb in [(False, False), (True, False), (False, True), (True, True)]:
                 variation = copy.deepcopy(new_spec)
                 variation.entity_effects = comb[0]
@@ -246,6 +263,7 @@ class Model():
         
     def run(self,coeff_decimals=2,latex_path=None,
             time_fe_name='Time FEs', entity_fe_name='Entity FEs',
+            other_fe_name = 'Other FEs',
             custom_row=None, display_datasets=False):
         """
         Run all regressions in the models
@@ -290,7 +308,31 @@ class Model():
             regs = compare(regs, stars=True, precision='tstats')
             csv = regs.summary.as_csv()
             tab = pd.read_csv(io.StringIO(csv), skiprows=1)
-            
+
+
+            other_eff_dict = {}
+            for idx, spec in enumerate(model.specs):
+                if spec.other_effects != None:
+                    other_eff_dict[idx] = spec.other_effects
+            if other_eff_dict != {}:
+                rows = tab.shape[0]
+                cols = tab.shape[1]
+                last_row = tab[rows-1:rows].copy()
+                tab = tab[:rows-1]
+                tab.loc[tab.shape[0]] = ['Other Effects'] + ['']*(cols-1)
+                tab = pd.concat([tab,last_row])
+                for key, value in other_eff_dict.items():
+                    if isinstance (value, list):
+                        renamed_items = []
+                        for item in value:
+                            if item in self._rename_dict.keys():
+                                item = self._rename_dict[item]
+                            renamed_items.append(item)
+                        tab.iat[tab.shape[0]-2,int(key)+1] = ', '.join(renamed_items)
+                    else:  
+                        if value in self._rename_dict.keys():
+                                    value = self._rename_dict[value]
+                        tab.iat[tab.shape[0]-2,int(key)+1] = value
             tab = tab.set_index([tab.columns[0]])
             col_dict = dict(zip(tab.columns.to_list(), 
                               list(map(lambda x:'('+str(int(x.replace(' ','').replace('Model',''))+1)+')',
@@ -339,7 +381,7 @@ class Model():
             final = pd.concat([tab.head(1), coeffs])
             for idx,name in enumerate(final.iloc[0]):
                 if re.sub('[ \t]+$','', name) in self._rename_dict.keys():
-                   final.iloc[0][idx] = self._rename_dict[re.sub('[ \t]+$','', name)]
+                   final.iat[0,idx] = self._rename_dict[re.sub('[ \t]+$','', name)]
 
             # Add spacing
             final = pd.concat([final.iloc[:1], pd.DataFrame(index=[' ']), final.iloc[1:]])
@@ -351,13 +393,18 @@ class Model():
 
             # Inclusive R2s (including fixed effects)
             final.iloc[-1] = R2s
-
-            effects = pd.DataFrame(index=[time_fe_name, entity_fe_name])
+            
+            effects = pd.DataFrame(index=[time_fe_name, entity_fe_name, other_fe_name])
             some_effects = False
             for column in tab.columns:
                 for x in tab[column]:
                     if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
                     if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
+            if other_eff_dict != {}:
+                effects.loc[other_fe_name,:] = tab.iloc[tab.shape[0]-2,:].copy()
+                some_effects = True
+            else:
+                effects = effects[:2]
             if some_effects: final=pd.concat([final,effects])
 
             if display_datasets != False:
