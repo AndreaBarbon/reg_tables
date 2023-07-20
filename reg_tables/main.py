@@ -1,6 +1,5 @@
 import warnings
-from linearmodels import PanelOLS
-from reg_tables.utils import compare, align_latex_table
+from reg_tables.utils import compare, align_latex_table, PanelOLSNew
 from statsmodels.tools.tools import add_constant
 import copy
 import io
@@ -101,7 +100,7 @@ class Spec():
             The panel effects results object.
         
         """             
-        reg = PanelOLS(
+        reg = PanelOLSNew(
                 self.data[[self.y]],
                 add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
                 entity_effects = self.entity_effects, 
@@ -245,7 +244,7 @@ class Model():
         """
         for key in rename_dict.keys(): self._rename_dict[key] = rename_dict[key]
         
-    def run(self,coeff_decimals=None,latex_path=None,
+    def run(self,coeff_decimals=2,latex_path=None,
             time_fe_name='Time FEs', entity_fe_name='Entity FEs',
             custom_row=None, display_datasets=False):
         """
