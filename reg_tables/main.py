@@ -401,7 +401,8 @@ class Model():
                     if re.search('Time', str(x))!=None: effects.loc[time_fe_name,column]='Yes'; some_effects = True
                     if re.search('Entity', str(x))!=None: effects.loc[entity_fe_name,column]='Yes'; some_effects = True
             if other_eff_dict != {}:
-                effects.loc[other_fe_name,:] = tab.iloc[tab.shape[0]-2,:].copy()
+                for x in tab.iloc[tab.shape[0]-2,:].index:
+                    effects.at[other_fe_name, x] = tab.iloc[tab.shape[0]-2,:][x]
                 some_effects = True
             else:
                 effects = effects[:2]
