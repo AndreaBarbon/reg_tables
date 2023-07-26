@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import re
 from varname import argname
-from varname.utils import ImproperUseError
+from varname.utils import ImproperUseError, UsingExecWarning
 from ast import Subscript
 from tqdm import tqdm as tq
 
@@ -58,7 +58,9 @@ class Spec():
             self.data_name = data_name
         else:
             try:
-                self.data_name = argname('data')
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=UsingExecWarning)
+                    self.data_name = argname('data')
             except ImproperUseError:
                 print("Can't retrieve name of dataset. Using default value. Rename the dataset or provide a 'data_name' argument.")
                 self.data_name = 'data'
@@ -229,7 +231,9 @@ class Model():
         except:pass
 
         if 'data' in kwargs.keys():
-            new_spec.data_name = argname('kwargs[data]')
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UsingExecWarning)
+                new_spec.data_name = argname('kwargs[data]')
             if isinstance(new_spec.data_name, Subscript):
                 if 'data_name' not in kwargs.keys():
                     new_spec.data_name = 'data'
