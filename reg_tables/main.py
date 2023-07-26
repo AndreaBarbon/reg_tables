@@ -9,6 +9,7 @@ import re
 from varname import argname
 from varname.utils import ImproperUseError
 from ast import Subscript
+from tqdm import tqdm as tq
 
 class Spec():
     """
@@ -275,7 +276,8 @@ class Model():
     def run(self,coeff_decimals=2,latex_path=None,
             time_fe_name='Time FEs', entity_fe_name='Entity FEs',
             other_fe_name = 'Other FEs',
-            custom_row=None, display_datasets=False):
+            custom_row=None, display_datasets=False,
+            rsquared='Inclusive'):
         """
         Run all regressions in the models
 
@@ -296,6 +298,9 @@ class Model():
             Display the names of databases in the results table. 
             If the value is 'True' then use original names of variables.
             Pass a list of strings to define custom names for databases.
+        rsquared : str
+            Type of R-squared. Default is 'Inclusive'. Other supported types - 'Standard', 'Between',
+            'Overall', 'Within'.
 
 
         Returns
@@ -311,11 +316,23 @@ class Model():
             if custom_row !=None:
                 if isinstance (custom_row,list)!=True:
                     print('Custom row is not a list')
-            regs = [ spec.run() for spec in self.specs ]
+            regs = []
+            for spec in tq(self.specs, 'Running regressions'):
+                regs.append(spec.run())
             
 
+            if rsquared == "Inclusive":
+                rsquared_func = lambda reg: reg.rsquared_inclusive
+            elif rsquared == "Standard":
+                rsquared_func = lambda reg: reg.rsquared
+            elif rsquared == "Between":
+                rsquared_func = lambda reg: reg.rsquared_between
+            elif rsquared == "Overall":
+                rsquared_func = lambda reg: reg.rsquared_overall
+            elif rsquared == "Within":
+                rsquared_func = lambda reg: reg.rsquared_within    
 
-            R2s  = [ reg.rsquared_inclusive for reg in regs ]
+            R2s  = list(map(rsquared_func, regs))
             regs = compare(regs, stars=True, precision='tstats')
             csv = regs.summary.as_csv()
             tab = pd.read_csv(io.StringIO(csv), skiprows=1)
