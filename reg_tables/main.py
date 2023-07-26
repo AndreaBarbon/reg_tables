@@ -110,6 +110,7 @@ class Spec():
                     add_constant(self.data[self.x_vars])if self.intercept == True else self.data[self.x_vars], 
                     entity_effects = self.entity_effects, 
                     time_effects = self.time_effects,
+                    other_effects = self.data[self.other_effects]
                 ).fit(
                 cov_type='clustered', 
                 cluster_entity=(self.cluster_entity | self.double_cluster),
@@ -308,7 +309,7 @@ class Model():
             regs = compare(regs, stars=True, precision='tstats')
             csv = regs.summary.as_csv()
             tab = pd.read_csv(io.StringIO(csv), skiprows=1)
-
+            
 
             other_eff_dict = {}
             for idx, spec in enumerate(self.specs):
