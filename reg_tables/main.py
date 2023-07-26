@@ -26,8 +26,6 @@ class Spec():
         Peform regression with entity effects
     time_effects : bool
         Peform regression with time effects
-    time_entity_effects : bool
-        Peform regression both with entity and time effects
     other_effects : {str,list, dict, set, tuple, np.ndarray, pd.core.series.Series}
         Category codes to use for any effects that are not entity or time effects. Each variable is treated as an effect.
     cluster_entity : bool
@@ -44,10 +42,16 @@ class Spec():
 
     def __init__(self, 
             data, y, x_vars, 
-            entity_effects=False, time_effects=False, time_entity_effects=False,
+            entity_effects=False, time_effects=False,
             cluster_entity=False, other_effects=None, cluster_time=False, 
             double_cluster=False, intercept=True,check_rank=True, data_name=None
         ):
+        if ((
+            (time_effects==True) and
+            (entity_effects==True)
+            )and\
+          (other_effects!=None)):
+            raise ValueError('At most two fixed effects are supported.')
         self.data = data
         if data_name != None:
             self.data_name = data_name
@@ -63,7 +67,6 @@ class Spec():
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
-        self.time_entity_effects = time_entity_effects
         self.other_effects = other_effects
         self.cluster_entity = cluster_entity
         self.cluster_time = cluster_time
@@ -71,13 +74,13 @@ class Spec():
         self.intercept=intercept
         self.check_rank=check_rank
         if (time_effects or entity_effects): intercept=False
+        
 
     def __repr__(self):
         return (f'dataset : {self.data_name}\
                 x-vars: {self.x_vars}, y: {self.y},\
                 Entity Effects: {self.entity_effects},\
                 Time Effects: {self.time_effects},\
-                Time and Entity Effects: {self.time_entity_effects},\
                 Other Effects: {self.other_effects},\
                 Cluster Entity: {self.cluster_entity},\
                 Cluster Time: {self.cluster_time},\
@@ -231,7 +234,14 @@ class Model():
                     new_spec.data_name = 'data'
                     print("Can't retrieve name of dataset. Using default value. Rename the dataset or provide a 'data_name' argument.")
 
-
+        if (('time_entity_effects' in kwargs) and ('other_effects' in kwargs)) or\
+        ((
+            ('time_effects' in kwargs) and
+            ('entity_effects' in kwargs)
+            )\
+         and ('other_effects' in kwargs)):
+            raise ValueError('At most two fixed effects are supported.')
+            
 
         for key in kwargs: setattr(new_spec, key, kwargs[key])
 
@@ -423,6 +433,7 @@ class Model():
                     custom.at[custom_row[0],final.columns[idx]]=item
                 final = pd.concat([final,custom])
             final.fillna('', inplace=True)
+            final.drop(index=' ', inplace=True)
             if latex_path != None:
                 latex_string = final.style.to_latex(column_format = 'l'+ ((final.shape[1])*'c'), hrules=True)
                 # latex_string = re.sub('(?<=\{tabular\}\{l)(.*?)(?=\})',
