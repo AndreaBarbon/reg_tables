@@ -64,13 +64,19 @@ class Spec():
             except ImproperUseError:
                 print("Can't retrieve name of dataset. Using default value. Rename the dataset or provide a 'data_name' argument.")
                 self.data_name = 'data'
+
+
+        
         self.y = y
         if isinstance(x_vars, (list, dict, set, tuple,
                                np.ndarray, pd.core.series.Series)) != True: x_vars = [x_vars]
         self.x_vars = x_vars
         self.entity_effects = entity_effects
         self.time_effects = time_effects
-        self.other_effects = other_effects
+        if other_effects == []:
+            self.other_effects = None
+        else:
+            self.other_effects = other_effects
         self.cluster_entity = cluster_entity
         self.cluster_time = cluster_time
         self.double_cluster = double_cluster
@@ -247,6 +253,10 @@ class Model():
          and ('other_effects' in kwargs)):
             raise ValueError('At most two fixed effects are supported.')
             
+        if 'other_effects' in kwargs:
+            if kwargs['other_effects'] == []:
+                kwargs['other_effects'] = None
+
 
         for key in kwargs: setattr(new_spec, key, kwargs[key])
 
@@ -340,7 +350,6 @@ class Model():
             regs = compare(regs, stars=True, precision='tstats')
             csv = regs.summary.as_csv()
             tab = pd.read_csv(io.StringIO(csv), skiprows=1)
-            
 
             other_eff_dict = {}
             for idx, spec in enumerate(self.specs):
@@ -438,7 +447,24 @@ class Model():
                 some_effects = True
             else:
                 effects = effects[:2]
-            if some_effects: final=pd.concat([final,effects])
+            if some_effects: final=pd.concat([final,effects.dropna(how='all')])
+            
+            clustering = pd.DataFrame(index=['SEs clustering:'], columns=final.columns)
+            for idx, spec in enumerate(self.specs):
+                if spec.cluster_entity == True:
+                    clustering.iat[0, idx] = 'Entity'
+                if spec.cluster_time == True:
+                    clustering.iat[0, idx] = 'Time'
+                if ((spec.cluster_time == True)\
+                      & (spec.cluster_entity == True))\
+                      | spec.double_cluster == True:
+                    clustering.iat[0, idx] = 'Entity and Time'
+            
+            clustering.dropna(how='all',inplace=True)
+            if clustering.shape[0] == 1:
+                final = pd.concat([final,clustering])
+
+
 
             if display_datasets != False:
                 if display_datasets == True:
@@ -448,6 +474,8 @@ class Model():
                     data_info = pd.DataFrame(data=[display_datasets]
                         , columns=final.columns, index=['Dataset'])
                 final = pd.concat([final, data_info])
+            
+            
             if custom_row != None:
                 custom = pd.DataFrame(index=[custom_row[0]])
                 for idx,item in enumerate(custom_row[1:]):
